@@ -1,0 +1,20 @@
+<!-- res/drawable/circular_progress_bar.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background circle (gray) -->
+    <item android:id="@android:id/background">
+        <shape android:shape="ring"
+            android:thicknessRatio="16"
+            android:useLevel="false">
+            <solid android:color="#D3D3D3"/> <!-- Background color (light gray) -->
+        </shape>
+    </item>
+
+    <!-- Progress circle (yellow) -->
+    <item android:id="@android:id/progress">
+        <shape android:shape="ring"
+            android:thicknessRatio="16"
+            android:useLevel="true">
+            <solid android:color="#FFD700"/> <!-- Progress color (yellow) -->
+        </shape>
+    </item>
+</layer-list>

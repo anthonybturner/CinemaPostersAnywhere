@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">CinemaPostersAnywhere</string>
+    <string name="slideshow">Slideshow</string>
+    <string name="movie_title">The 4:30 Movie</string>
+    <string name="year">2024</string>
+    <string name="movie_overview">In the summer of 1986, three sixteen year old friends spend their Saturdays sneaking into movies at the local multiplex. But when one of the guys also invites the girl of his dreams to see the latest comedy, each of the teens learn more about life and love.</string>
+    <string name="movie_poster">Movie Poster</string>
+    <string name="movie_year">year</string>
+    <string name="now_playing">Now Playing</string>
+    <string name="In_theaters">Theaters Now...</string>
+    <string name="movie_poster_image_container">movie poster image container</string>
+    <string name="top_movies">Top</string>
+    <string name="all_movies">All</string>
+    <string name="popular">Popular</string>
+    <string name="trending">Trending</string>
+    <string name="progress_percentage">0/0 (0%)</string>
+</resources>
