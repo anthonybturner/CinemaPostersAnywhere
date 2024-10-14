@@ -62,6 +62,7 @@ dependencies {
     // Core Android libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.adapters)
 
     // Jetpack Compose and Room dependencies
     val room_version = "2.5.0"

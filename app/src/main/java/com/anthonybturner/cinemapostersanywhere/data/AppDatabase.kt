@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.anthonybturner.cinemapostersanywhere.Models.Movie
+import com.anthonybturner.cinemapostersanywhere.utilities.Converters
 
-@Database(entities = [Movie::class], version = 5)  // Make sure the version matches your current schema version
+@Database(entities = [Movie::class], version = 7)  // Make sure the version matches your current schema version
+@TypeConverters(Converters::class)  // Correct syntax for Kotlin
 abstract class AppDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
 

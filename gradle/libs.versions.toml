@@ -20,6 +20,7 @@ gson = "2.8.8"
 okhttp = "4.9.0"
 constraintlayout = "2.1.4"
 volley = "1.2.1"
+adapters = "3.2.0-alpha11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,6 +50,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 socket-io-client-v201 = { module = "io.socket:socket.io-client", version.ref = "socketIoClient" }
 socket-socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIoClientVersion" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+androidx-adapters = { group = "androidx.databinding", name = "adapters", version.ref = "adapters" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
