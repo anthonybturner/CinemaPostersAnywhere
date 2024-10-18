@@ -7,11 +7,22 @@
     <string name="movie_poster">Movie Poster</string>
     <string name="movie_year">year</string>
     <string name="now_playing">Now Playing</string>
-    <string name="In_theaters">Theaters Now...</string>
+    <string name="In_theaters">Theaters Now…</string>
     <string name="movie_poster_image_container">movie poster image container</string>
     <string name="top_movies">Top</string>
     <string name="all_movies">All</string>
     <string name="popular">Popular</string>
     <string name="trending">Trending</string>
     <string name="progress_percentage">0/0 (0%)</string>
+    <string name="rated">Rated: </string>
+    <string name="adult_status">Adult Status</string>
+    <string name="todo">TODO</string>
+    <string name="tomato_percentage">72%</string>
+    <string name="original_language">Original Language</string>
+    <string name="genres">Genres</string>
+    <string name="popularity">Popularity</string>
+    <string name="vote_count">Vote Count</string>
+    <string name="padding">12dp</string>
+    <string name="studio">Studio: </string>
+    <string name="studio_value">[Unknown Studio]</string>
 </resources>

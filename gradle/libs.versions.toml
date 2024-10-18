@@ -21,6 +21,7 @@ okhttp = "4.9.0"
 constraintlayout = "2.1.4"
 volley = "1.2.1"
 adapters = "3.2.0-alpha11"
+cardview = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -51,6 +52,7 @@ socket-io-client-v201 = { module = "io.socket:socket.io-client", version.ref = "
 socket-socket-io-client = { module = "io.socket:socket.io-client", version.ref = "socketIoClientVersion" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 androidx-adapters = { group = "androidx.databinding", name = "adapters", version.ref = "adapters" }
+androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -3,6 +3,8 @@ package com.anthonybturner.cinemapostersanywhere;
 import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.MOVIE_UPDATED_INTENT_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.NOW_PLAYING_INTENT_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.PLEX_BRIDGE_ADDRESS;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
@@ -96,43 +98,35 @@ public class MainActivity extends AppCompatActivity {
         movieRatingTextView = findViewById(R.id.tomato_percentage);
         progressBar = findViewById(R.id.progressBar); // Progress bar initialization
         progressText = findViewById(R.id.progressText);
-        adultStatusTextView = findViewById(R.id.adult_status);
+        adultStatusTextView = findViewById(R.id.movie_ratings);
         originalLanguageTextView = findViewById(R.id.original_language);
         genresTextView = findViewById(R.id.genres);
         popularityTextView = findViewById(R.id.popularity);
         voteCountTextView = findViewById(R.id.vote_count);
         // Initialize the ImageView for the tomato icon
         tomatoIcon = findViewById(R.id.tomato_icon);
-
-
         // Get PowerManager system service
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-
         // Create a WakeLock with the PARTIAL_WAKE_LOCK level to keep the CPU running
         wakeLock = powerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "MyApp::WakeLockTag");
         // Acquire the WakeLock
         wakeLock.acquire();
         createButtons();
-
         // Initialize Retrofit for Flask API calls
         retrofit = new Retrofit.Builder()
                 .baseUrl(PLEX_BRIDGE_ADDRESS)  // Flask API base URL from Constants
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         flaskApiService = retrofit.create(FlaskApiService.class); // Create FlaskApiService instance
-
         // Initialize the DAO for local database access
         movieDao = AppDatabase.Companion.getInstance(this).movieDao(); // Use AppDatabase to get MovieDao
-
         // Fetch movies from local database or Flask API
         fetchMovies();
-
         // Register the receiver for Now Playing events
         LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
                 new IntentFilter(NOW_PLAYING_INTENT_ACTION));
         LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
                 new IntentFilter(MOVIE_UPDATED_INTENT_ACTION));
-
         // Start the WebSocketService
         Intent serviceIntent = new Intent(this, WebSocketService.class);
         startService(serviceIntent);
@@ -143,14 +137,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (Objects.equals(intent.getAction(), NOW_PLAYING_INTENT_ACTION)) {
                 if (Objects.equals(intent.getStringExtra("action"), "now_playing")) {
-                    String title = intent.getStringExtra("title");
-                    String year = intent.getStringExtra("year");
-                    String overview = intent.getStringExtra("overview");
-                    String posterUrl = intent.getStringExtra("posterUrl");
-
-                    // Update UI with now playing info
-                    assert year != null;
-                    showNowPlaying(title, year, posterUrl, overview);
+                    showNowPlaying(intent);
                 } else if (Objects.equals(intent.getStringExtra("action"), "resume_slideshow")) {
                     // Send broadcast to close NowPlayingActivity
                     Intent closeIntent = new Intent("com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING");
@@ -414,11 +401,11 @@ public class MainActivity extends AppCompatActivity {
     }
     // Methods to handle the new fields
     private void setAdultStatus(Boolean isAdult) {
-        adultStatusTextView.setText(isAdult ? "Adult" : "Family-friendly");
+        adultStatusTextView.setText(isAdult ? "[Adult]" : "[Family-friendly]");
     }
 
     private void setOriginalLanguage(String language) {
-        originalLanguageTextView.setText(language != null ? language : "Unknown Language");
+        originalLanguageTextView.setText(language != null ? String.format("[%s]", language) : "[Unknown Language]");
     }
 
     private void setGenres(String genres) {
@@ -426,11 +413,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setPopularity(double popularity) {
-        popularityTextView.setText(String.format("Popularity: %.2f", popularity));
+        popularityTextView.setText(String.format("Popularity: [%.2f]", popularity));
     }
 
     private void setVoteCount(int voteCount) {
-        voteCountTextView.setText(String.format("Vote Count: %d", voteCount));
+        voteCountTextView.setText(String.format("Vote Count: [%d]", voteCount));
     }
     // Method to set movie ratings and display the corresponding tomato icon
     private void setMovieRatings(float tomatoRating) {
@@ -465,19 +452,15 @@ public class MainActivity extends AppCompatActivity {
         movieTitleTextView.setText(title);
     }
 
-    public void showNowPlaying(String title, String year, String posterUrl, String overview) {
+    @SuppressLint("UnsafeIntentLaunch")
+    public void showNowPlaying(Intent intent) {
         stopSlideshow();
         showingNowPlaying = true;  // Set the flag to indicate Now Playing is active
-        Intent intent = new Intent(this, NowPlayingActivity.class);
         // Pass movie details to NowPlayingActivity
-        intent.putExtra("title", title);
-        intent.putExtra("overview", overview);
-        intent.putExtra("year", (year.equals("0") || year.isEmpty()) ? "Unknown Year" : year);
-        intent.putExtra("poster_url", posterUrl);
+        intent.setClass(this, NowPlayingActivity.class);
         // Start NowPlayingActivity
         startActivity(intent);
     }
-
     // Method to resume the slideshow
     public void resumeSlideshow() {
         if (!showingNowPlaying) {
