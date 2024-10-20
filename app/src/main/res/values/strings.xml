@@ -25,4 +25,5 @@
     <string name="padding">12dp</string>
     <string name="studio">Studio: </string>
     <string name="studio_value">[Unknown Studio]</string>
+    <string name="tomato_rating">Tomato Rating:</string>
 </resources>
