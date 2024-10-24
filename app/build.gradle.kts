@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.adapters)
     implementation(libs.androidx.cardview)
+    implementation(libs.androidx.recyclerview)
 
     // Jetpack Compose and Room dependencies
     val room_version = "2.5.0"
@@ -111,4 +112,12 @@ dependencies {
     // Debugging tools
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation (libs.androidx.drawerlayout)
+    implementation (libs.material) // For Navigation Drawer
+
+    implementation (libs.androidx.recyclerview.v130)
+
+
 }
+

@@ -28,7 +28,7 @@ public class NowPlayingActivity extends AppCompatActivity {
     private final BroadcastReceiver closeNowPlayingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Objects.equals(intent.getAction(), "com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING")) {
+            if (Objects.equals(intent.getAction(), MainActivity.CLOSE_NOW_PLAYING_ACTION)) {
                 finish();
             }
         }
@@ -42,7 +42,7 @@ public class NowPlayingActivity extends AppCompatActivity {
         setupUI(intent);
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 closeNowPlayingReceiver,
-                new IntentFilter("com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING")
+                new IntentFilter(MainActivity.CLOSE_NOW_PLAYING_ACTION)
         );
     }
 

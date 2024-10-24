@@ -18,6 +18,7 @@ import com.anthonybturner.cinemapostersanywhere.services.FlaskApiService;
 import com.anthonybturner.cinemapostersanywhere.data.MovieDao;
 import com.anthonybturner.cinemapostersanywhere.data.AppDatabase;
 import com.anthonybturner.cinemapostersanywhere.services.WebSocketService;
+import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
 import com.anthonybturner.cinemapostersanywhere.utilities.GenreUtils;
 import com.anthonybturner.cinemapostersanywhere.utilities.ImageUtils;
 import com.bumptech.glide.Glide;
@@ -35,6 +36,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String STEAM_GAME_PLAYING_ACTION = "STEAM_GAME_UPDATE";
+    public static final String CLOSE_NOW_PLAYING_ACTION = "com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING";
     private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView,
             progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
     private ImageView moviePosterImageView, tomatoIcon;
@@ -42,11 +45,12 @@ public class MainActivity extends AppCompatActivity {
     private final Handler handler = new Handler();
     private Timer slideshowTimer;
     private int currentImageIndex = 0;
+    private static String lastDisplayedGameId = null;
     private boolean showingNowPlaying = false;
     private List<Movie> flaskMovieList = new ArrayList<>();
     private FlaskApiService flaskApiService;
     private MovieDao movieDao;
-    private boolean slideshowRunning;
+    private static boolean slideshowRunning;
     private PowerManager.WakeLock wakeLock;
 
     @Override
@@ -61,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         initializeDatabase();
         fetchMovies();
         registerReceivers();
-        startWebSocketService();
+        startServices();
     }
 
     private void initializeViews() {
@@ -110,11 +114,16 @@ public class MainActivity extends AppCompatActivity {
                 new IntentFilter(NOW_PLAYING_INTENT_ACTION));
         LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
                 new IntentFilter(MOVIE_UPDATED_INTENT_ACTION));
+        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
+                new IntentFilter(STEAM_GAME_PLAYING_ACTION));
     }
 
-    private void startWebSocketService() {
+    private void startServices() {
         Intent serviceIntent = new Intent(this, WebSocketService.class);
         startService(serviceIntent);
+        // Start the SteamGameService
+        Intent intent = new Intent(this, SteamGameService.class);
+        startService(intent);
     }
 
     private final BroadcastReceiver nowPlayingReceiver = new BroadcastReceiver() {
@@ -125,10 +134,29 @@ public class MainActivity extends AppCompatActivity {
                 handleNowPlayingIntent(intent);
             } else if (MOVIE_UPDATED_INTENT_ACTION.equals(action)) {
                 refreshLocalDatabase();
+            }else if (STEAM_GAME_PLAYING_ACTION.equals(action)) {
+                handleGamePlaying(intent);
             }
         }
     };
 
+    private void handleGamePlaying(Intent intent) {
+        String status = intent.getStringExtra("game_status");
+        if(Objects.equals(status, "success")){
+            // Check if the new game ID is different from the last displayed
+            lastDisplayedGameId = intent.getStringExtra("game_id");
+            stopSlideshow();
+            showingNowPlaying = true;
+            intent.setClass(this, SteamGameActivity.class);
+            startActivity(intent);
+        }else if(Objects.equals(status, "failed")){
+            lastDisplayedGameId = "";
+            resumeSlideshowFromNowPlaying();
+        }
+    }
+    public static boolean isSameGameDisplayed(String gameId) {
+        return gameId != null && gameId.equals(lastDisplayedGameId);
+    }
 
     private void handleNowPlayingIntent(Intent intent) {
         String action = intent.getStringExtra("action");
@@ -140,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resumeSlideshowFromNowPlaying() {
-        Intent closeIntent = new Intent("com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING");
+        Intent closeIntent = new Intent(CLOSE_NOW_PLAYING_ACTION);
         LocalBroadcastManager.getInstance(this).sendBroadcast(closeIntent);
         showingNowPlaying = false;
         resumeSlideshow();
@@ -397,7 +425,7 @@ public class MainActivity extends AppCompatActivity {
         updateMovieDetails(currentMovie);
     }
 
-    public boolean isSlideshowPlaying() {
+    public static boolean isSlideshowPlaying() {
         return slideshowRunning;
     }
 
@@ -438,6 +466,8 @@ public class MainActivity extends AppCompatActivity {
             slideshowTimer.cancel();
         }
         LocalBroadcastManager.getInstance(this).unregisterReceiver(nowPlayingReceiver);
+        stopService(new Intent(this, WebSocketService.class));
+        stopService(new Intent(this, SteamGameService.class));
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }

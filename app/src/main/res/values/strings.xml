@@ -26,4 +26,18 @@
     <string name="studio">Studio: </string>
     <string name="studio_value">[Unknown Studio]</string>
     <string name="tomato_rating">Tomato Rating:</string>
+    <string name="min_requirements">Min Requirements</string>
+    <string name="max_requirements">Max requirements</string>
+    <string name="game_poster_image_container">Game poster</string>
+    <string name="game_title">Game Title</string>
+    <string name="game_overview">Game overview</string>
+    <string name="apex_legends_acheivements">Apex Legends Acheivements</string>
+    <string name="apex_legends_system_requirements">Apex Legends System Requirements</string>
+    <string name="min_or_max_requirements">Min or Max Requirements</string>
+    <string name="navigation_drawer_open">open</string>
+    <string name="navigation_drawer_close">closed</string>
+    <string name="videos">Videos</string>
+    <string name="settings">Settings</string>
+    <string name="video_thumbnail">thumb video</string>
+    <string name="youtube_video_name_here">Youtube video name here</string>
 </resources>

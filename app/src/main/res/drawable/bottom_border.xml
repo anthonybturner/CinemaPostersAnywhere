@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Semi-transparent black background -->
+    <item>
+        <shape
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:shape="rectangle">
+            <solid android:color="#7EDCCC36" /> <!-- Semi-transparent black -->
+        </shape>
+    </item>
+
+    <!-- Bottom Border -->
+    <item android:top="4dp" android:right="4dp" android:left="4dp" android:bottom="4dp">
+        <shape
+            android:shape="rectangle">
+            <size android:height="7dp" /> <!-- Height of the border -->
+            <solid android:color="#7A000000" /> <!-- Red border for visibility -->
+        </shape>
+    </item>
+
+
+</layer-list>
