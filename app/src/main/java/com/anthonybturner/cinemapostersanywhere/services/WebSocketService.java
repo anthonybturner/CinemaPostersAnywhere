@@ -1,7 +1,5 @@
 package com.anthonybturner.cinemapostersanywhere.services;
 
-import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.NOW_PLAYING_INTENT_ACTION;
-
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -12,7 +10,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.BuildConfig;
 import com.anthonybturner.cinemapostersanywhere.NowPlayingWebSocketListener;
@@ -20,7 +17,6 @@ import com.anthonybturner.cinemapostersanywhere.R;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
 
 import java.net.URISyntaxException;
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE video_ids [
+    <!ELEMENT video_ids (video_id+)>
+    <!ELEMENT video_id (#PCDATA)>
+    ]>
+<video_ids>
+    <video_id>XxfIKrj65LM</video_id>
+    <video_id>kQkYabjDIrM</video_id>
+    <video_id>C1kKfvDxJpw</video_id>
+</video_ids>

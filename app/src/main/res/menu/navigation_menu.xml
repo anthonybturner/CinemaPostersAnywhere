@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_videos"
+        android:title="@string/videos" />
+    <item
+        android:id="@+id/nav_settings"
+        android:title="@string/settings" />
+    <!-- Add more items as needed -->
+</menu>

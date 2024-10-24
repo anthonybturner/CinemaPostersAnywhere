@@ -1,3 +1,7 @@
 <resources>
     <color name="semi_transparent_black">#A7000000</color>
+    <color name="lighter_semi_transparent_black">#A6504B2D</color>
+    <color name="white">#FFF</color>
+    <color name="black">#000</color>
+    <color name="yellow">#FFEB3B</color>
 </resources>

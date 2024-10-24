@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.0"
+drawerlayout = "1.2.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 appcompat = "1.7.0"
@@ -7,6 +8,8 @@ composeBom = "2024.04.01"  # Ensure this is a valid Compose BOM version
 lifecycleViewmodelKtx = "2.8.6"
 lifecycleViewmodelKtxVersion = "2.5.1"
 localbroadcastmanager = "1.1.0"
+material = "1.12.0"
+recyclerviewVersion = "1.3.0"
 roomRuntime = "2.5.0"
 socketIoClient = "2.0.1"
 socketIoClientVersion = "2.0.0"
@@ -22,14 +25,18 @@ constraintlayout = "2.1.4"
 volley = "1.2.1"
 adapters = "3.2.0-alpha11"
 cardview = "1.0.0"
+youtubeAndroidPlayerApi = "1.2.2"
+recyclerview = "1.3.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version = "2.8.6" }
 androidx-lifecycle-viewmodel-ktx-v251 = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtxVersion" }
 androidx-localbroadcastmanager = { module = "androidx.localbroadcastmanager:localbroadcastmanager", version.ref = "localbroadcastmanager" }
+androidx-recyclerview-v130 = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
@@ -44,6 +51,7 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson-converter = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
@@ -53,6 +61,8 @@ socket-socket-io-client = { module = "io.socket:socket.io-client", version.ref =
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 androidx-adapters = { group = "androidx.databinding", name = "adapters", version.ref = "adapters" }
 androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+youtube-android-player-api = { module = "com.google.android.youtube:youtube-android-player-api", version.ref = "youtubeAndroidPlayerApi" }
+androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

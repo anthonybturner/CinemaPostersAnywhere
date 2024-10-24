@@ -1,6 +1,4 @@
-package com.anthonybturner.cinemapostersanywhere;
-
-import com.anthonybturner.cinemapostersanywhere.Models.Movie;
+package com.anthonybturner.cinemapostersanywhere.Models;
 
 import java.util.List;
 

@@ -1,9 +1,6 @@
 package com.anthonybturner.cinemapostersanywhere.services;
 
-import com.anthonybturner.cinemapostersanywhere.Models.Movie;
-import com.anthonybturner.cinemapostersanywhere.MovieResponse;
-
-import java.util.List;
+import com.anthonybturner.cinemapostersanywhere.Models.MovieResponse;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
