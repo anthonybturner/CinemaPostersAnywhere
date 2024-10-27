@@ -1,5 +1,7 @@
 package com.anthonybturner.cinemapostersanywhere.services;
 
+import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.PLEX_BRIDGE_ADDRESS;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -21,8 +23,9 @@ import io.socket.client.Socket;
 import java.net.URISyntaxException;
 
 public class WebSocketService extends Service {
-    public static String PLEX_BRIDGE_ADDRESS = "https://plexbridgeandroid-fd0cdaf65913.herokuapp.com/"; // Default address
+    //public static String PLEX_BRIDGE_ADDRESS = "https://plexbridgeandroid-fd0cdaf65913.herokuapp.com/"; // Default address
     private NowPlayingWebSocketListener listener;
+    private ApexLegendsWebSocketListener steamListener;
     private Socket socket;
 
     @Override
@@ -54,10 +57,15 @@ public class WebSocketService extends Service {
             socket.on(Socket.EVENT_CONNECT, args -> {
                 Log.d("WebSocket", "Connected to server");
                 listener.onOpen();
+                steamListener.onOpen();
             });
             socket.on("plex_event", args -> {
                 Log.d("WebSocket", "Plex event received: " + args[0]);
                 listener.onMessage(args[0]);  // Pass data to listener
+            });
+            socket.on("apex_event", args -> {
+                Log.d("WebSocket", "Apex event received: " + args[0]);
+                steamListener.onMessage(args[0]);  // Pass data to listener
             });
             socket.on("movieUpdate", args -> {
                 Log.d("WebSocket", "Movie update received: ");
@@ -78,6 +86,7 @@ public class WebSocketService extends Service {
         //Notification notification = createNotification();
        //startForeground(1, notification);  // Start service in the foreground
         listener = new NowPlayingWebSocketListener(this);
+        steamListener = new ApexLegendsWebSocketListener(this);
         setupWebSocket();
         return START_NOT_STICKY;  // Keep service running
     }

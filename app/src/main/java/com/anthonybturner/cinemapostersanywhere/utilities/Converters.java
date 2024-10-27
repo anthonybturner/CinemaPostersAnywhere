@@ -1,9 +1,13 @@
 package com.anthonybturner.cinemapostersanywhere.utilities;
 
 import androidx.room.TypeConverter;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class Converters {
@@ -29,6 +33,12 @@ public class Converters {
             }
             return result.toString();
         }
+    }
+
+    public static String convertUnixToReadable(long unixSeconds) {
+        Date date = new Date(unixSeconds * 1000L);  // Convert seconds to milliseconds
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        return sdf.format(date);
     }
 
     // Convert a comma-separated String back to List<Integer>

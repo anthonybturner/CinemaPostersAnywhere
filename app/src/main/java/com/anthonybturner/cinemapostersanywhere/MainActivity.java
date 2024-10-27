@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Movie;
+import com.anthonybturner.cinemapostersanywhere.Models.Video;
+import com.anthonybturner.cinemapostersanywhere.interfaces.OnVideoDataFetchedListener;
 import com.anthonybturner.cinemapostersanywhere.services.FlaskApiService;
 import com.anthonybturner.cinemapostersanywhere.data.MovieDao;
 import com.anthonybturner.cinemapostersanywhere.data.AppDatabase;
@@ -34,10 +36,11 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnVideoDataFetchedListener {
 
     public static final String STEAM_GAME_PLAYING_ACTION = "STEAM_GAME_UPDATE";
     public static final String CLOSE_NOW_PLAYING_ACTION = "com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING";
+    public static final String APEX_LEGENDS_API_UPDATE_ACTION = "com.anthonybturner.cinemapostersanywhere.STEAM_UPDATE";
     private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView,
             progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
     private ImageView moviePosterImageView, tomatoIcon;
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private int currentImageIndex = 0;
     private static String lastDisplayedGameId = null;
     private boolean showingNowPlaying = false;
+    private boolean isUsingSteamGameSystem = false;
     private List<Movie> flaskMovieList = new ArrayList<>();
     private FlaskApiService flaskApiService;
     private MovieDao movieDao;
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         fetchMovies();
         registerReceivers();
         startServices();
+        isUsingSteamGameSystem = true;
     }
 
     private void initializeViews() {
@@ -121,10 +126,12 @@ public class MainActivity extends AppCompatActivity {
     private void startServices() {
         Intent serviceIntent = new Intent(this, WebSocketService.class);
         startService(serviceIntent);
+
         // Start the SteamGameService
         Intent intent = new Intent(this, SteamGameService.class);
         startService(intent);
     }
+
 
     private final BroadcastReceiver nowPlayingReceiver = new BroadcastReceiver() {
         @Override
@@ -134,11 +141,17 @@ public class MainActivity extends AppCompatActivity {
                 handleNowPlayingIntent(intent);
             } else if (MOVIE_UPDATED_INTENT_ACTION.equals(action)) {
                 refreshLocalDatabase();
-            }else if (STEAM_GAME_PLAYING_ACTION.equals(action)) {
-                handleGamePlaying(intent);
+            }else if (STEAM_GAME_PLAYING_ACTION.equals(action) && isUsingSteamGameSystem) {
+               handleGamePlaying(intent);
+            }else if (APEX_LEGENDS_API_UPDATE_ACTION.equals(action)) {
+                handleApexLegendsPlaying(intent);
             }
         }
     };
+
+    private void handleApexLegendsPlaying(Intent intent) {
+
+    }
 
     private void handleGamePlaying(Intent intent) {
         String status = intent.getStringExtra("game_status");
@@ -471,5 +484,10 @@ public class MainActivity extends AppCompatActivity {
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
+    }
+
+    @Override
+    public void onVideoDataFetched(List<Video> videoList) {
+
     }
 }

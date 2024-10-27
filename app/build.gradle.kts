@@ -21,10 +21,10 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://plexbridgeandroid-fd0cdaf65913.herokuapp.com/\"")
+            buildConfigField("String", "BASE_URL", "\"https://web-production-89879.up.railway.app/\"")
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"https://plexbridgeandroid-fd0cdaf65913.herokuapp.com/\"")
+            buildConfigField("String", "BASE_URL", "\"https://web-production-89879.up.railway.app/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

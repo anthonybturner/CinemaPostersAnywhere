@@ -40,6 +40,7 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity android:name=".AchievementActivity" />
         <activity android:name=".RequirementsActivity" />
+        <activity android:name=".ApexLegendsActivity" />
         <!-- WebSocketService as a foreground service -->
         <service
             android:name=".services.WebSocketService"

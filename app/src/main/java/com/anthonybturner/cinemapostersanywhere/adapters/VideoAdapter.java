@@ -2,6 +2,7 @@ package com.anthonybturner.cinemapostersanywhere.adapters;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +23,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     private final List<Video> videoList;
     private final OnVideoClickListener listener;
     public int selectedPosition = -1; // Variable to track the selected position
-    private int focusedPosition = -1;   // Variable to track the focused position for navigation
+    public int focusedPosition = -1;   // Variable to track the focused position for navigation
 
     public interface OnVideoClickListener {
         void onVideoClick(String videoId);
@@ -49,9 +50,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             notifyDataSetChanged(); // Refresh the list to reflect changes
             listener.onVideoClick(video.getVideoId()); // Notify listener for video click
         });
-
-        // Ensure that the title TextView scrolls horizontally with marquee
-        holder.title.setSelected(true); // Important to trigger marquee
     }
 
     @Override
@@ -68,21 +66,27 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
     public static class VideoViewHolder extends RecyclerView.ViewHolder {
         private final ImageView thumbnail;
         private final TextView title;
-        private final VideoAdapter adapter; // Keep a reference to the adapter
-
         public VideoViewHolder(@NonNull View itemView, VideoAdapter adapter) {
             super(itemView);
-            this.adapter = adapter; // Assign the adapter instance
-            thumbnail = itemView.findViewById(R.id.video_thumbnail);
+            // Keep a reference to the adapter
             title = itemView.findViewById(R.id.video_title);
+            thumbnail = itemView.findViewById(R.id.video_thumbnail);
+            itemView.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    adapter.focusedPosition = getAdapterPosition(); // Update focused position
+                    title.setSelected(true); // Start marquee when item is focused
+                    title.requestFocus(); // Request focus on the title to ensure marquee works
+                   itemView.setBackgroundResource(R.drawable.video_item_background_highlight);
+                } else {
+                   itemView.setBackgroundResource(R.drawable.video_item_background); // Revert to default background
+                    title.setSelected(false); // Stop marquee when focus is lost
+                }
+            });
         }
-
         public void bind(Video video, OnVideoClickListener listener, boolean isSelected, boolean isFocused) {
             title.setText(video.getTitle());
             Glide.with(thumbnail.getContext()).load(video.getThumbnailUrl()).into(thumbnail);
 
-            // Make sure marquee is enabled
-            title.setSelected(true);
         }
     }
 }

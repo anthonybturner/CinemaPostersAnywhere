@@ -13,7 +13,6 @@
     <item>
         <shape>
             <corners android:radius="2dp"/> <!-- Rounded corners for default state -->
-            <solid android:color="#80000000" /> <!-- Default background color -->
         </shape>
     </item>
 </selector>

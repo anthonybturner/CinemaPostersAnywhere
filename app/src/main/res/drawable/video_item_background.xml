@@ -1,6 +1,10 @@
-<!-- res/drawable/video_item_background.xml -->
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_pressed="true" android:drawable="@color/lighter_semi_transparent_black" /> <!-- Replace with your pressed color -->
-    <item android:state_selected="true" android:drawable="@color/lighter_semi_transparent_black" /> <!-- Replace with your selected color -->
-    <item android:drawable="@color/semi_transparent_black" /> <!-- Default background color -->
-</selector>
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Semi-transparent background -->
+    <item>
+        <shape>
+            <solid android:color="#90000000" /> <!-- Semi-transparent white background -->
+            <corners android:radius="2dp"/> <!-- Optional: Rounded corners -->
+        </shape>
+    </item>
+</layer-list>
