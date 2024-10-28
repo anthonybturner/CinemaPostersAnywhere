@@ -41,6 +41,8 @@
         <activity android:name=".AchievementActivity" />
         <activity android:name=".RequirementsActivity" />
         <activity android:name=".ApexLegendsActivity" />
+        <activity android:name=".SettingsActivity" />
+
         <!-- WebSocketService as a foreground service -->
         <service
             android:name=".services.WebSocketService"

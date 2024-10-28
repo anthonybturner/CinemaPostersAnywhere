@@ -51,8 +51,8 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     private static String lastDisplayedGameId = null;
     private boolean showingNowPlaying = false;
     private boolean isUsingSteamGameSystem = false;
-    private List<Movie> flaskMovieList = new ArrayList<>();
-    private FlaskApiService flaskApiService;
+    private List<Movie> movieList = new ArrayList<>();
+    private FlaskApiService movieApiService;
     private MovieDao movieDao;
     private static boolean slideshowRunning;
     private PowerManager.WakeLock wakeLock;
@@ -100,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         findViewById(R.id.button_top_rated).setOnClickListener(v -> fetchMoviesByCategory("Top Movies"));
         findViewById(R.id.button_popular).setOnClickListener(v -> fetchMoviesByCategory("Popular Movies"));
         findViewById(R.id.button_trending).setOnClickListener(v -> fetchMoviesByCategory("Trending Movies"));
+        findViewById(R.id.button_settings).setOnClickListener(v ->  { Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void initializeRetrofit() {
@@ -107,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
                 .baseUrl(PLEX_BRIDGE_ADDRESS)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        flaskApiService = retrofit.create(FlaskApiService.class);
+        movieApiService = retrofit.create(FlaskApiService.class);
     }
 
     private void initializeDatabase() {
@@ -191,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             movieDao.deleteAllMovies();
-            fetchMoviesFromFlask();
+            fetchServerMovies();
         });
     }
 
@@ -201,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
             List<Movie> movies = movieDao.getMoviesByCategory(category);
             runOnUiThread(() -> {
                 if (!movies.isEmpty()) {
-                    flaskMovieList = movies;
+                    movieList = movies;
                     Toast.makeText(MainActivity.this, "Fetched " + movies.size() + " " + category + " from DB", Toast.LENGTH_SHORT).show();
                     startSlideshow();
                 } else {
@@ -217,28 +220,27 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
             List<Movie> localMovies = movieDao.getAllMovies();
             runOnUiThread(() -> {
                 if (!localMovies.isEmpty()) {
-                    flaskMovieList = localMovies;
-                    Toast.makeText(MainActivity.this, "Fetched " + flaskMovieList.size() + " Movies from DB", Toast.LENGTH_SHORT).show();
+                    movieList = localMovies;
+                    Toast.makeText(MainActivity.this, "Fetched " + movieList.size() + " Movies from DB", Toast.LENGTH_SHORT).show();
                     hideProgress();
                     startSlideshow();
                 } else {
-                    fetchMoviesFromFlask();
+                    fetchServerMovies();
                 }
             });
         });
     }
 
-    private void fetchMoviesFromFlask() {
-        flaskApiService.getPosters().enqueue(new Callback<List<Movie>>() {
+    private void fetchServerMovies() {
+        movieApiService.getPosters().enqueue(new Callback<List<Movie>>() {
             @Override
             public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    processFlaskMovies(response.body());
+                    processMovies(response.body());
                 } else {
                     hideProgress();
                 }
             }
-
             @Override
             public void onFailure(Call<List<Movie>> call, Throwable t) {
                 Log.e("MainActivity", "Failed to fetch movies from Flask API", t);
@@ -247,20 +249,17 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         });
     }
 
-    private void processFlaskMovies(List<Movie> movies) {
-        flaskMovieList = movies;
-        int totalFiles = flaskMovieList.size();
+    private void processMovies(List<Movie> movies) {
+        movieList = movies;
+        int totalFiles = movieList.size();
         showProgress(totalFiles);
-
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             for (int i = 0; i < totalFiles; i++) {
-                Movie movie = flaskMovieList.get(i);
+                Movie movie = movieList.get(i);
                 processMovie(movie, i, totalFiles);
             }
-
-            movieDao.insertMovies(flaskMovieList);
-
+            movieDao.insertMovies(movieList);
             runOnUiThread(() -> {
                 hideProgress();
                 startSlideshow();
@@ -273,13 +272,12 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
             String genreNames = GenreUtils.convertGenreIdsToNames(movie.getGenreIds());
             movie.setGenres(genreNames);
         }
-
         Bitmap bitmap = ImageUtils.downloadImage(movie.getPosterPath());
         if (bitmap != null) {
+            //Change tmdb api poster path to local image path.
             String imagePath = ImageUtils.saveImageToStorage(this, bitmap, movie.getTitle() + ".jpg");
             movie.setPosterImage(imagePath);
         }
-
         updateProgress(index + 1, totalFiles);
     }
 
@@ -312,7 +310,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
             @Override
             public void run() {
                 handler.post(() -> {
-                    if (showingNowPlaying || flaskMovieList.isEmpty()) return;
+                    if (showingNowPlaying || movieList.isEmpty()) return;
                     //currentImageIndex = getRandomMovieIndex(flaskMovieList.size());
                     goNextSlide();
                 });
@@ -329,7 +327,6 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
 
     private void loadPoster(Movie movie) {
         String posterPath = movie.getPosterImage();
-
         if (posterPath != null && !posterPath.isEmpty()) {
             Glide.with(MainActivity.this)
                     .load(new File(posterPath))
@@ -418,13 +415,13 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         if (currentImageIndex > 0) {
             currentImageIndex--;
         } else {
-            currentImageIndex = flaskMovieList.size() - 1;
+            currentImageIndex = movieList.size() - 1;
         }
         showCurrentSlide();
     }
 
     private void goNextSlide() {
-        if (currentImageIndex < flaskMovieList.size() - 1) {
+        if (currentImageIndex < movieList.size() - 1) {
             currentImageIndex++;
         } else {
             currentImageIndex = 0;
@@ -433,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     }
 
     private void showCurrentSlide() {
-        Movie currentMovie = flaskMovieList.get(currentImageIndex);
+        Movie currentMovie = movieList.get(currentImageIndex);
         loadPoster(currentMovie);
         updateMovieDetails(currentMovie);
     }

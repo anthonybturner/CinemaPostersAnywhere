@@ -5,11 +5,15 @@ import static com.anthonybturner.cinemapostersanywhere.MainActivity.APEX_LEGENDS
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.IBinder;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
@@ -36,6 +40,8 @@ import com.anthonybturner.cinemapostersanywhere.Models.YouTubeResponse;
 import com.anthonybturner.cinemapostersanywhere.Models.YouTubeVideo;
 import com.anthonybturner.cinemapostersanywhere.adapters.VideoAdapter;
 import com.anthonybturner.cinemapostersanywhere.interfaces.YouTubeApiService;
+import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
+import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
 import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
@@ -62,29 +68,31 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class SteamGameActivity extends AppCompatActivity implements VideoAdapter.OnVideoClickListener{
-
+    // Constants
     private static final String TAG = "SteamGameActivity";
     private static final String YOUTUBE_API_KEY = "AIzaSyBJxsSN8930AS9257v8JwTncSjNDXSlotg"; // Your YouTube API key
     private static final String BASE_URL = "https://www.googleapis.com/youtube/v3/";
-    // UI components
-    private WebView webView;
-    private ProgressBar loadingIndicator;
 
-    private DrawerLayout drawerLayout;
+    // UI Components
+    private WebView webView;
     private RecyclerView recyclerView;
     private VideoAdapter videoAdapter;
     private ActionBarDrawerToggle drawerToggle;
-    // Video management
-    private List<Video> videoList = new ArrayList<>();
-    private int currentVideoIndex = 0;
+    private TextView countdownTimerTextView;
+
+    // Video Management
+    private final List<Video> videoList = new ArrayList<>();
+    private final int currentVideoIndex = 0;
     private int currentFocusPosition;
     private boolean isVideoPaused;
 
+    // Service Management
     public static boolean isActive = false;
-    //private SteamUpdateReceiver steamUpdateReceiver;
+    private SteamGameService steamGameService;
+    private boolean bound = false;
 
-    // Define the BroadcastReceiver to handle updates from SteamWebSocketService
-    private final BroadcastReceiver steamUpdateReceiver = new BroadcastReceiver()  {
+    // Broadcast Receivers
+    private final BroadcastReceiver steamUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String steamData = intent.getStringExtra("steamData");
@@ -100,8 +108,23 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         @Override
         public void onReceive(Context context, Intent intent) {
             if (CLOSE_NOW_PLAYING_ACTION.equals(intent.getAction())) {
-                finish();
+                finish(); // Close the activity
             }
+        }
+    };
+
+    // Service Connection
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            SteamGameService.LocalBinder binder = (SteamGameService.LocalBinder) service;
+            steamGameService = binder.getService();
+            bound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            bound = false;
         }
     };
 
@@ -125,8 +148,26 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         initializeUIComponents();
         setupWebView(videoList);
         createDrawer();
+
         // Loading indicator for the WebView
-        loadingIndicator = findViewById(R.id.loading_indicator);
+        ProgressBar loadingIndicator = findViewById(R.id.loading_indicator);
+
+        registerReceivers();
+        updateUIFromIntent(getIntent());
+    }
+    private void updateUIFromIntent(Intent intent) {
+        try {
+            updateUIWithGameDetails(intent);
+            String gameName = intent.getStringExtra("game_name");
+            if (gameName != null) {
+                fetchRelatedVideos(gameName); // Fetch related videos based on game name
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void registerReceivers() {
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 closeNowPlayingReceiver,
                 new IntentFilter(CLOSE_NOW_PLAYING_ACTION)
@@ -135,23 +176,14 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
                 steamUpdateReceiver,
                 new IntentFilter(APEX_LEGENDS_API_UPDATE_ACTION)
         );
-
-        try {
-            updateUIWithGameDetails(getIntent());
-            String gameName = getIntent().getStringExtra("game_name");
-            if (gameName != null) {
-                fetchRelatedVideos(gameName); // Fetch related videos based on game name
-            }
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
+        Intent serviceIntent = new Intent(this, SteamGameService.class);
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
-    public static final String VIDEOS_TITLE = "Videos"; // Use exact title from your menu
-    public static final String SETTINGS_TITLE = "Settings"; // Use exact title from your menu
 
     private void initializeUIComponents() {
         videoAdapter = new VideoAdapter(videoList, this);
         webView = findViewById(R.id.youtube_webview);
+        countdownTimerTextView = findViewById(R.id.map_duration);
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -181,7 +213,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Initialize DrawerLayout
-        drawerLayout = findViewById(R.id.drawer_layout);
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
@@ -345,13 +377,9 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-
        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || keyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
             if (isVideoPaused) {
-                webView.evaluateJavascript(
-                        "(function() { if (player.getPlayerState() === 1) { pauseVideo(); } else { playVideo(); } })();",
-                        null
-                );
+                webView.evaluateJavascript("(function() { if (player.getPlayerState() === 1) { pauseVideo(); } else { playVideo(); } })();", null);
                 // Play video
             } else {
                 webView.evaluateJavascript("javascript:pauseVideo();", null);   // Pause video
@@ -367,7 +395,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             );
             return true; // Indicate that the event has been handled
         }
-       return super.onKeyDown(keyCode, event);
+        return super.onKeyDown(keyCode, event);
     }
 
     private int getNextRandomVideoIndex() {
@@ -385,7 +413,6 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             TextView gameNameTextView = findViewById(R.id.title);
             TextView gameDescriptionTextView = findViewById(R.id.overview);
             ImageView gamePosterImageView = findViewById(R.id.game_poster);
-            TextView currentMapTextView = findViewById(R.id.current_map);
 
             String gameName = intent.getStringExtra("game_name");
             String releaseDate = intent.getStringExtra("release_date");
@@ -394,14 +421,11 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
 
             SetAchievements(intent);
             if(intent.hasExtra("map")){
-                posterImageUrl = intent.getStringExtra("asset");
-                currentMapTextView.setText(String.format("Current Map: %s",intent.getStringExtra("map")));
-                intent.getStringExtra("start");
-                intent.getStringExtra("end");
-                intent.getStringExtra("DurationInSecs");
-                intent.getStringExtra("DurationInMinutes");
+               createMapInfo(intent);
+               posterImageUrl = intent.getStringExtra("asset");//If a map, use the map's image for the background of the activity
             }else{
-                posterImageUrl = intent.getStringExtra("poster_image_url");
+                hideGameMapView();
+                posterImageUrl = intent.getStringExtra("poster_image_url");//Otherwise, use the steam game poster for the background
             }
             final String posterImage = posterImageUrl;
             String minimumRequirements = intent.getStringExtra("minimum_requirements");
@@ -410,12 +434,80 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             String maximumRequirements = intent.getStringExtra("recommended_requirements");
             createMaxRequirements(maximumRequirements, posterImage);
 
-            gameNameTextView.setText(String.format("Now Playing: %s (%s)", gameName, releaseDate));
+            gameNameTextView.setText(String.format("%s (%s)", gameName, releaseDate));
             gameDescriptionTextView.setText(description);
             if (posterImageUrl != null) {
                 Glide.with(this).load(posterImageUrl).into(gamePosterImageView);
             }
         }
+    }
+    private void createMapInfo(Intent intent) {
+        createGameMapView(intent);
+        createNextMapView(intent);
+    }
+    private void hideGameMapView() {
+        TextView currentMapTextView = findViewById(R.id.current_map);
+        currentMapTextView.setVisibility(View.GONE);
+        findViewById(R.id.current_map_layout).setVisibility(View.GONE);
+        findViewById(R.id.next_map_layout).setVisibility(View.GONE);
+    }
+
+    private void createNextMapView(Intent intent) {
+        TextView nextMapTextView = findViewById(R.id.next_map);
+        nextMapTextView.setText(String.format("Next Map: %s", intent.getStringExtra("next_map")));
+        TextView nextMapDuractionTextView = findViewById(R.id.next_map_duration);
+        nextMapDuractionTextView.setText(String.format("%s Minutes", intent.getStringExtra("next_DurationInMinutes")));
+
+        TextView nextMapStartDateTextView = findViewById(R.id.next_map_start_date);
+        String nextReadableDateStart = intent.getStringExtra("next_readableDate_start");
+        nextReadableDateStart = Converters.convertToFriendlyDate(nextReadableDateStart);
+        nextMapStartDateTextView.setText(String.format("Start Date: %s", nextReadableDateStart));
+
+        TextView nextMapEndDateTextView = findViewById(R.id.next_map_end_date);
+        String nextReadableDateEnd = intent.getStringExtra("next_readableDate_end");
+        nextReadableDateEnd = Converters.convertToFriendlyDate(nextReadableDateEnd);
+        nextMapEndDateTextView.setText(String.format("End Date: %s",nextReadableDateEnd ));
+    }
+
+    private void createGameMapView(Intent intent) {
+        TextView currentMapTextView = findViewById(R.id.current_map);
+        currentMapTextView.setText(String.format("%s", intent.getStringExtra("map")));
+        currentMapTextView.setVisibility(View.VISIBLE);
+        findViewById(R.id.current_map_layout).setVisibility(View.VISIBLE);
+        findViewById(R.id.next_map_layout).setVisibility(View.VISIBLE);
+
+        long remainingSecs = intent.getLongExtra("remainingSecs", 0);
+        long durationInMillis = remainingSecs * 1000;
+        startMapTimer(durationInMillis);
+    }
+
+    private void startMapTimer(long intervalInMillis) {
+        // 1 second interval
+        // Update the UI when the timer finishes
+        // Call the API method when the timer finishes
+        CountDownTimer mapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1 second interval
+            @Override
+            public void onTick(long millisUntilFinished) {
+                updateCountdownTextView(millisUntilFinished);
+            }
+
+            @Override
+            public void onFinish() {
+                countdownTimerTextView.setText("Time's up!"); // Update the UI when the timer finishes
+                if (steamGameService != null) {
+                    steamGameService.checkCurrentGame(true); // Call the API method when the timer finishes
+                }
+            }
+        }.start();
+    }
+
+    private void updateCountdownTextView(long millisUntilFinished) {
+        long totalSeconds = millisUntilFinished / 1000;
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+        // Update TextView with formatted time in HH:MM:SS format
+        countdownTimerTextView.setText(String.format("Time Left: %02d:%02d:%02d", hours, minutes, seconds));
     }
 
     private void createMinRequirements(String minimumRequirements, String posterImage) {
@@ -492,15 +584,12 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
 
         // Clear any existing views (optional, if the layout is reused)
        // achievementsLayout.removeAllViews();
-
         // Loop through the arrays and create views for each achievement
         for (int i = 0; i < achievementNames.length(); i++) {
-
             String name = achievementNames.getString(i);
             String status = achievementStatuses.getString(i);
             String iconUrl = achievementIcons.getString(i);
             String desc =  achievementDesc.getString(i);
-
             // Create a horizontal LinearLayout to contain icon and texts
             LinearLayout achievementCard = CreateAchievementCard(intent, name, status, iconUrl, desc);
             // Add the row layout to the main achievements layout
@@ -544,6 +633,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
 
         // Create TextView for achievement name
         TextView nameTextView = CreateAchievementTextView(name, 6,LinearLayout.LayoutParams.WRAP_CONTENT);
+        setTextViewMarquee(nameTextView);
         achievementCard.addView(nameTextView);
 
         // Create TextView for achievement status (unlocked/locked)
@@ -567,7 +657,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         achievementCard.setPadding(8, 8, 8, 8); // Add padding between achievements
         // Create LayoutParams and set the margins
         LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(
-                128 ,
+                80 ,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         linearLayoutParams.setMargins(2, 2, 2, 2); // Left, Top, Right, Bottom margins in pixels
@@ -589,5 +679,12 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(closeNowPlayingReceiver);
+        // Unregister the BroadcastReceiver to avoid memory leaks
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(steamUpdateReceiver);
+        // Unbind the service
+        if (bound) {
+            unbindService(serviceConnection);
+            bound = false;
+        }
     }
 }

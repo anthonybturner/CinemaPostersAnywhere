@@ -59,15 +59,15 @@ public class WebSocketService extends Service {
                 listener.onOpen();
                 steamListener.onOpen();
             });
-            socket.on("plex_event", args -> {
+            socket.on("plex_event", args -> {//Triggered when a movie starts playing in plex media server (webhook)
                 Log.d("WebSocket", "Plex event received: " + args[0]);
                 listener.onMessage(args[0]);  // Pass data to listener
             });
-            socket.on("apex_event", args -> {
+            socket.on("apex_event", args -> {//Used for match history webhooks, not yet available
                 Log.d("WebSocket", "Apex event received: " + args[0]);
                 steamListener.onMessage(args[0]);  // Pass data to listener
             });
-            socket.on("movieUpdate", args -> {
+            socket.on("movieUpdate", args -> {//Trigger when a server update occurs for new movies added
                 Log.d("WebSocket", "Movie update received: ");
                 listener.onMovieUpdate(args[0]);  // Pass data to listener
             });
