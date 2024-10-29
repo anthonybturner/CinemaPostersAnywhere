@@ -5,7 +5,7 @@
         <shape>
             <corners android:radius="2dp"/> <!-- Change the radius as needed -->
             <solid android:color="#80000000" /> <!-- Light color when focused -->
-            <stroke android:width="1dp" android:color="#FF9800" /> <!-- Optional border -->
+            <stroke android:width="1dp" android:color="#FFFFA500" /> <!-- Optional border -->
         </shape>
     </item>
 

@@ -4,6 +4,7 @@ import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.*;
 
 import android.annotation.SuppressLint;
 import android.content.*;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.*;
 import android.util.Log;
@@ -11,11 +12,13 @@ import android.view.*;
 import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Movie;
 import com.anthonybturner.cinemapostersanywhere.Models.Video;
 import com.anthonybturner.cinemapostersanywhere.interfaces.OnVideoDataFetchedListener;
+import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
 import com.anthonybturner.cinemapostersanywhere.services.FlaskApiService;
 import com.anthonybturner.cinemapostersanywhere.data.MovieDao;
 import com.anthonybturner.cinemapostersanywhere.data.AppDatabase;
@@ -36,11 +39,12 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements OnVideoDataFetchedListener {
+public class MainActivity extends AppCompatActivity implements OnVideoDataFetchedListener, TimerUpdateListener {
 
     public static final String STEAM_GAME_PLAYING_ACTION = "STEAM_GAME_UPDATE";
     public static final String CLOSE_NOW_PLAYING_ACTION = "com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING";
     public static final String APEX_LEGENDS_API_UPDATE_ACTION = "com.anthonybturner.cinemapostersanywhere.STEAM_UPDATE";
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 1;
     private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView,
             progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
     private ImageView moviePosterImageView, tomatoIcon;
@@ -56,6 +60,24 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     private MovieDao movieDao;
     private static boolean slideshowRunning;
     private PowerManager.WakeLock wakeLock;
+    private SteamGameService steamGameService;
+    private boolean bound;
+
+    // Service Connection
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            SteamGameService.LocalBinder binder = (SteamGameService.LocalBinder) service;
+            steamGameService = binder.getService();
+            steamGameService.setTimerCallback(MainActivity.this);
+            bound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            bound = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +93,23 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         registerReceivers();
         startServices();
         isUsingSteamGameSystem = true;
+        // Request notification permission if needed (only for Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // TIRAMISU corresponds to API 33
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATION_PERMISSION);
+            }
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, you can proceed with notifications
+            } else {
+                // Permission denied, handle accordingly
+            }
+        }
     }
 
     private void initializeViews() {
@@ -103,6 +142,13 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         findViewById(R.id.button_settings).setOnClickListener(v ->  { Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
         });
+        Button steamButton = findViewById(R.id.button_steam);
+        steamButton.setOnClickListener(v ->  {
+            if(steamGameService != null){
+                steamGameService.checkCurrentGame(true);
+            }
+        });
+        hideSteamButton();
     }
 
     private void initializeRetrofit() {
@@ -127,14 +173,14 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     }
 
     private void startServices() {
-        Intent serviceIntent = new Intent(this, WebSocketService.class);
+        Intent socketServiceIntent = new Intent(this, WebSocketService.class);
+        startService(socketServiceIntent);
+        // Start the SteamGameService
+        Intent serviceIntent = new Intent(this, SteamGameService.class);
         startService(serviceIntent);
 
-        // Start the SteamGameService
-        Intent intent = new Intent(this, SteamGameService.class);
-        startService(intent);
+        bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
-
 
     private final BroadcastReceiver nowPlayingReceiver = new BroadcastReceiver() {
         @Override
@@ -481,10 +527,41 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
+        if (bound) {
+            unbindService(serviceConnection);
+            bound = false;
+        }
     }
 
     @Override
     public void onVideoDataFetched(List<Video> videoList) {
 
+    }
+
+    @Override
+    public void onTimerUpdate(long durationInMillis) {
+
+    }
+
+    @Override
+    public void onTimerFinish() {
+        hideSteamButton();
+    }
+
+    @Override
+    public void onTimerStarted() {
+        showSteamButton();
+    }
+
+    private void hideSteamButton() {
+        Button button = findViewById(R.id.button_steam);
+        button.setEnabled(false);
+        button.setVisibility(View.GONE);
+    }
+
+    private void showSteamButton() {
+        Button button = findViewById(R.id.button_steam);
+        button.setEnabled(true);
+        button.setVisibility(View.VISIBLE);
     }
 }

@@ -203,7 +203,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:background="@color/semi_transparent_black"
+                android:background="@drawable/button_background"
                 android:text="@string/all_movies"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
@@ -212,7 +212,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:background="@color/semi_transparent_black"
+                android:background="@drawable/button_background"
                 android:text="@string/top_movies"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
@@ -221,7 +221,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:background="@color/semi_transparent_black"
+                android:background="@drawable/button_background"
                 android:text="@string/popular"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
@@ -230,8 +230,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:background="@color/semi_transparent_black"
+                android:background="@drawable/button_background"
                 android:text="@string/trending"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+            <Button
+                android:id="@+id/button_steam"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/button_background"
+                android:text="@string/steam"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
             <Button
@@ -239,7 +248,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:background="@color/semi_transparent_black"
+                android:background="@drawable/button_background"
                 android:text="@string/settings"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />

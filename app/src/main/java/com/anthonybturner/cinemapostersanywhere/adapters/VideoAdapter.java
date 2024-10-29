@@ -71,17 +71,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VideoViewHol
             // Keep a reference to the adapter
             title = itemView.findViewById(R.id.video_title);
             thumbnail = itemView.findViewById(R.id.video_thumbnail);
-            itemView.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus) {
-                    adapter.focusedPosition = getAdapterPosition(); // Update focused position
-                    title.setSelected(true); // Start marquee when item is focused
-                    title.requestFocus(); // Request focus on the title to ensure marquee works
-                   itemView.setBackgroundResource(R.drawable.video_item_background_highlight);
-                } else {
-                   itemView.setBackgroundResource(R.drawable.video_item_background); // Revert to default background
-                    title.setSelected(false); // Stop marquee when focus is lost
-                }
-            });
+
         }
         public void bind(Video video, OnVideoClickListener listener, boolean isSelected, boolean isFocused) {
             title.setText(video.getTitle());

@@ -33,12 +33,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Video;
 import com.anthonybturner.cinemapostersanywhere.Models.YouTubeResponse;
 import com.anthonybturner.cinemapostersanywhere.Models.YouTubeVideo;
 import com.anthonybturner.cinemapostersanywhere.adapters.VideoAdapter;
+import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
 import com.anthonybturner.cinemapostersanywhere.interfaces.YouTubeApiService;
 import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
@@ -67,7 +69,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-public class SteamGameActivity extends AppCompatActivity implements VideoAdapter.OnVideoClickListener{
+public class SteamGameActivity extends AppCompatActivity implements VideoAdapter.OnVideoClickListener, TimerUpdateListener {
     // Constants
     private static final String TAG = "SteamGameActivity";
     private static final String YOUTUBE_API_KEY = "AIzaSyBJxsSN8930AS9257v8JwTncSjNDXSlotg"; // Your YouTube API key
@@ -119,6 +121,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         public void onServiceConnected(ComponentName name, IBinder service) {
             SteamGameService.LocalBinder binder = (SteamGameService.LocalBinder) service;
             steamGameService = binder.getService();
+            steamGameService.setTimerCallback(SteamGameActivity.this);
             bound = true;
         }
 
@@ -138,6 +141,20 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     protected void onStop() {
         super.onStop();
         isActive = false;
+    }
+    @Override
+    public void onTimerStarted() {
+
+    }
+
+    @Override
+    public void onTimerUpdate(long durationInMillis) {
+        updateCountdownTextView(durationInMillis);
+    }
+
+    @Override
+    public void onTimerFinish() {
+
     }
 
     @Override
@@ -228,8 +245,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     }
     @Override
     public void onVideoClick(String videoId) {
-        //loadVideo(videoId);
-        loadVideoUrl(videoId);
+        loadVideo(videoId);
     }
     private void fetchRelatedVideos(String gameName) {
         Retrofit retrofit = new Retrofit.Builder()
@@ -242,7 +258,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
                 YOUTUBE_API_KEY,
                 "snippet",
                 "video",
-                20
+                10
         );
         call.enqueue(new Callback<YouTubeResponse>() {
             @SuppressLint("NotifyDataSetChanged")
@@ -285,36 +301,12 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setAllowFileAccess(true);
+        webView.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+        webView.getSettings().setLoadWithOverviewMode(true);
+        webView.getSettings().setUseWideViewPort(true);
         webView.isFocusable();
         webView.isFocusableInTouchMode();
         webView.requestFocus();
-        // Set the OnKeyListener
-        webView.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                    webView.evaluateJavascript(
-                            "(function() { if (player.getPlayerState() === 1) { pauseVideo(); } else { playVideo(); } })();",
-                            null
-                    );
-                }
-                if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                    switch (keyCode) {
-                        case KeyEvent.KEYCODE_DPAD_CENTER:
-                        case KeyEvent.KEYCODE_ENTER:
-                            // Toggle play/pause by calling JavaScript functions
-                            webView.evaluateJavascript(
-                                    "(function() { if (player.getPlayerState() === 1) { pauseVideo(); } else { playVideo(); } })();",
-                                    null
-                            );
-                            return true;
-                        default:
-                            return false;
-                    }
-                }
-                return false;
-            }
-        });
         // Enable mixed content mode for Lollipop and above
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
@@ -325,43 +317,19 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
                 super.onPageFinished(view, url);
             }
         });
-        adjustWebViewSize();
+     // adjustWebViewSize();
     }
     private void adjustWebViewSize() {
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) webView.getLayoutParams();
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) webView.getLayoutParams();
         int width = getResources().getDimensionPixelSize(R.dimen.sidebar_width);
         params.height = (width * 9) / 16; // Maintain 16:9 aspect ratio
-        webView.setLayoutParams(params);
-    }
-    private void loadVideoUrl(String videoId) {
-        String videoUrl = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&enablejsapi=1";
-        webView.loadUrl(videoUrl);
+        //params.height = 500;
+         webView.setLayoutParams(params);
     }
     private void loadVideo(String videoId) {
-        // Build the HTML string
-        String html = loadHtmlFromAssets("youtube_player.html");
-        html = html.replace("VIDEO_ID", videoId);
-        // Load the HTML into the WebView
-        webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
-    }
-    private String buildHtmlString(String videoId) {
-        StringBuilder html = new StringBuilder();
-        html.append("<!DOCTYPE html>")
-                .append("<html>")
-                .append("<head>")
-                .append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
-                .append("<style>")
-                .append("body { margin: 0; padding: 0; }")
-                .append("iframe { width: 100%; height: 100%; }")
-                .append("</style>")
-                .append("</head>")
-                .append("<body>")
-                .append("<iframe id=\"player\" type=\"text/html\" ")
-                .append("src=\"https://www.youtube.com/embed/").append(videoId).append("?autoplay=1\" ")
-                .append("frameborder=\"0\" allowfullscreen></iframe>")
-                .append("</body>")
-                .append("</html>");
-        return html.toString();
+        String videoUrl = "https://www.youtube.com/embed/" + videoId + "?autoplay=0&enablejsapi=1&mute=0";
+        String htmlContent = "<html><body style='margin:0;padding:0;'><iframe width='100%' height='100%' src='" + videoUrl + "' frameborder='0' allow='autoplay; encrypted-media' allowfullscreen></iframe></body></html>";
+        webView.loadData(htmlContent, "text/html", "UTF-8");
     }
     private String loadHtmlFromAssets(String fileName) {
         StringBuilder html = new StringBuilder();
@@ -407,7 +375,6 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         int randomIndex = random.nextInt(videoList.size());
         return randomIndex;
     }
-
     private void updateUIWithGameDetails(Intent intent) throws JSONException {
         if (intent != null) {
             TextView gameNameTextView = findViewById(R.id.title);
@@ -476,29 +443,9 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         findViewById(R.id.current_map_layout).setVisibility(View.VISIBLE);
         findViewById(R.id.next_map_layout).setVisibility(View.VISIBLE);
 
-        long remainingSecs = intent.getLongExtra("remainingSecs", 0);
-        long durationInMillis = remainingSecs * 1000;
-        startMapTimer(durationInMillis);
-    }
-
-    private void startMapTimer(long intervalInMillis) {
-        // 1 second interval
-        // Update the UI when the timer finishes
-        // Call the API method when the timer finishes
-        CountDownTimer mapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1 second interval
-            @Override
-            public void onTick(long millisUntilFinished) {
-                updateCountdownTextView(millisUntilFinished);
-            }
-
-            @Override
-            public void onFinish() {
-                countdownTimerTextView.setText("Time's up!"); // Update the UI when the timer finishes
-                if (steamGameService != null) {
-                    steamGameService.checkCurrentGame(true); // Call the API method when the timer finishes
-                }
-            }
-        }.start();
+        //long remainingSecs = intent.getLongExtra("remainingSecs", 0);
+        //long durationInMillis = remainingSecs * 1000;
+        //onTimerUpdatepTimer(durationInMillis);
     }
 
     private void updateCountdownTextView(long millisUntilFinished) {
@@ -516,9 +463,6 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             minRequirementsTextView.setVisibility(View.GONE);
             return;
         }
-        minRequirementsTextView.setFocusable(true);
-        minRequirementsTextView.setFocusableInTouchMode(true);
-        minRequirementsTextView.setBackgroundResource(R.drawable.achievement_requirements_selector);
         minRequirementsTextView.setOnClickListener(view -> {
             // Handle click event
             Intent minReqIntent = new Intent(this, RequirementsActivity.class);
@@ -539,9 +483,6 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             maxRequirementsTextView.setVisibility(View.GONE);
             return;
         }
-        maxRequirementsTextView.setFocusable(true);
-        maxRequirementsTextView.setFocusableInTouchMode(true);
-        maxRequirementsTextView.setBackgroundResource(R.drawable.achievement_requirements_selector);
         maxRequirementsTextView.setOnClickListener(view -> {
             // Handle click event
             Intent recommendedReqIntent = new Intent(this, RequirementsActivity.class);
@@ -674,7 +615,6 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         });
         return achievementCard;
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -687,4 +627,5 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             bound = false;
         }
     }
+
 }

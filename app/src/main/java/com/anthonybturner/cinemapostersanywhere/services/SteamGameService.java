@@ -1,16 +1,25 @@
 package com.anthonybturner.cinemapostersanywhere.services;
 
+import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.android.volley.Request;
@@ -22,14 +31,17 @@ import com.android.volley.toolbox.Volley;
 import com.anthonybturner.cinemapostersanywhere.MainActivity;
 import com.anthonybturner.cinemapostersanywhere.SteamGameActivity;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
-import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
+import com.anthonybturner.cinemapostersanywhere.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.CountDownLatch;
 
 public class SteamGameService extends Service {
@@ -46,6 +58,7 @@ public class SteamGameService extends Service {
     private RequestQueue requestQueue;
     private CountDownTimer mapCountDownTimer;
     private static String steamID;
+    private List<TimerUpdateListener> listenersList;
     private TimerUpdateListener timerUpdateListener;
 
     private final IBinder binder = new LocalBinder();
@@ -59,6 +72,11 @@ public class SteamGameService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
+    }
+
+    public void setTimerCallback(TimerUpdateListener callback) {
+        listenersList.add(callback);
+        //this.timerUpdateListener = callback;
     }
 
     public static void setSteamId(String newSteamId) {
@@ -76,8 +94,45 @@ public class SteamGameService extends Service {
         super.onCreate();
         handler = new Handler();
         requestQueue = Volley.newRequestQueue(this);
+        listenersList = new ArrayList<TimerUpdateListener>();
+        createNotificationChannel();
         monitorActiveGameStatus();
     }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "TimerChannel";
+            String description = "Channel for timer notifications";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("TIMER_CHANNEL_ID", name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+    private void sendTimerFinishedNotification(Intent mapIntent) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted; don't post the notification
+            return;
+        }
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        String map = mapIntent.getStringExtra("next_map");
+        String durationInMins = mapIntent.getStringExtra("durationInMins");
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "TIMER_CHANNEL_ID")
+                .setSmallIcon(R.drawable.cinema) // Replace with your app’s icon
+                .setContentTitle(String.format("%s started", map))
+                .setContentText(String.format("Apex Legends - %s is up! %s minutes", map, durationInMins))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(1, builder.build()); // Use a unique ID for each notification
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Access SharedPreferences
@@ -97,7 +152,40 @@ public class SteamGameService extends Service {
         };
         handler.post(runnable);
     }
+    public void startMapTimer(long intervalInMillis) {
+        for(TimerUpdateListener listener : listenersList){
+            if (listener != null) {
+                listener.onTimerStarted();
+            }
+        }
+         mapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1 second interval
+            @Override
+            public void onTick(long millisUntilFinished) {
+               // remainingTime = millisUntilFinished;
+               // if (timerUpdateListener != null) {
+                  //  timerUpdateListener.onTimerUpdate(millisUntilFinished);
+               // }
+                for(TimerUpdateListener listener : listenersList){
+                    if (listener != null) {
+                        listener.onTimerUpdate(millisUntilFinished);
+                    }
+                }
+            }
+            @Override
+            public void onFinish() {
+                for(TimerUpdateListener listener : listenersList){
+                    if (listener != null) {
+                        listener.onTimerFinish();
+                    }
+                }
+                checkCurrentGame(true); // Call your API method here
+            }
+        }.start();
+    }
 
+    public void stopMapTimer(){
+        mapCountDownTimer.cancel();
+    }
     public void checkCurrentGame(){
         checkCurrentGame(false);
     }
@@ -113,7 +201,8 @@ public class SteamGameService extends Service {
                             JSONArray players = response.getJSONObject("response").getJSONArray("players");
                             if (players.length() > 0) {
                                 JSONObject player = players.getJSONObject(0);
-                                if (player.has("gameid")) {
+                                if (player.has("gameid")) {//Is playing steam game
+
                                     String gameId = player.getString("gameid");
                                     if (!MainActivity.isSameGameDisplayed((gameId)) || isMapOver) {//Ensure the same game is not currently running
                                         //TODO: save gameId to database table(eg.Games), and fetch gameId from database on upcoming calls to reduce api request calls.
@@ -134,8 +223,9 @@ public class SteamGameService extends Service {
                                                 finalLatch.await();
                                                 // Broadcast after both async calls complete
                                                 LocalBroadcastManager.getInstance(SteamGameService.this).sendBroadcast(intent);
+                                                sendTimerFinishedNotification(intent);
                                             } catch (InterruptedException e) {
-                                                e.printStackTrace();
+                                                Log.e(TAG, "Error by latch await interruption: " + e.getMessage());
                                             }
                                         }).start();
                                     }
@@ -194,6 +284,8 @@ public class SteamGameService extends Service {
             JSONObject nextMap = response.getJSONObject("next");
             extractMapData(nextMap, intent, "next_map", "next_readableDate_start", "next_readableDate_end", "next_DurationInMinutes");
 
+            long milliSeconds = currentMap.getLong("remainingSecs") * 1000;
+            startMapTimer(milliSeconds);
         } catch (Exception e) {
             Log.e(TAG, "Error fetching achievements: " + e.getMessage());
         }

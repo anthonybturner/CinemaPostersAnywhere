@@ -34,23 +34,6 @@ public class WebSocketService extends Service {
         PLEX_BRIDGE_ADDRESS = BuildConfig.BASE_URL;  // Use the base URL from BuildConfig
     }
 
-    private Notification createNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    "CHANNEL_ID",
-                    "Foreground Service",
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel);
-        }
-        return new NotificationCompat.Builder(this, "CHANNEL_ID")
-                .setContentTitle("Service Running")
-                .setContentText("Now Playing...")
-                .setSmallIcon(R.drawable.ic_notification)
-                .build();
-    }
-
     private void setupWebSocket() {
         try {
             socket = IO.socket(PLEX_BRIDGE_ADDRESS);
