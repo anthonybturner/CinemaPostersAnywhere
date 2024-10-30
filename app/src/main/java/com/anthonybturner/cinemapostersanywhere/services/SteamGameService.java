@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 import java.util.concurrent.CountDownLatch;
 
 public class SteamGameService extends Service {
@@ -56,7 +55,7 @@ public class SteamGameService extends Service {
     private Handler handler;
     private Runnable runnable;
     private RequestQueue requestQueue;
-    private CountDownTimer mapCountDownTimer, rankedMapCountDownTimer;
+    private CountDownTimer mapCountDownTimer, rankedMapCountDownTimer, arenasMapCountDownTimer;
     private static String steamID;
     private List<TimerUpdateListener> listenersList;
     private TimerUpdateListener timerUpdateListener;
@@ -152,7 +151,7 @@ public class SteamGameService extends Service {
         };
         handler.post(runnable);
     }
-    public void startMapTimer(long intervalInMillis) {
+    public void startPublicMapTimer(long intervalInMillis) {
         for(TimerUpdateListener listener : listenersList){
             if (listener != null) {
                 listener.onTimerStarted();
@@ -163,7 +162,7 @@ public class SteamGameService extends Service {
             public void onTick(long millisUntilFinished) {
                 for(TimerUpdateListener listener : listenersList){
                     if (listener != null) {
-                        listener.onTimerUpdate(millisUntilFinished, false);
+                        listener.onTimerUpdate(millisUntilFinished, false, false);
                     }
                 }
             }
@@ -178,6 +177,34 @@ public class SteamGameService extends Service {
             }
         }.start();
     }
+
+    private void startArenasMapTimer(long intervalInMillis) {
+        // Cancel any existing ranked timer to avoid overlapping
+        if (arenasMapCountDownTimer != null) {
+            arenasMapCountDownTimer.cancel();
+        }
+        // Initialize the ranked timer
+        arenasMapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1-second interval
+            @Override
+            public void onTick(long millisUntilFinished) {
+                for (TimerUpdateListener listener : listenersList) {
+                    if (listener != null) {
+                        listener.onTimerUpdate(millisUntilFinished, false, true);
+                    }
+                }
+            }
+            @Override
+            public void onFinish() {
+                for (TimerUpdateListener listener : listenersList) {
+                    if (listener != null) {
+                        listener.onTimerFinish(true);
+                    }
+                }
+                // Call your API method here for ranked games
+                checkCurrentGame(true); // Indicate ranked game by using a parameter if necessary
+            }
+        }.start();
+    }
     public void startRankedMapTimer(long intervalInMillis) {
         // Cancel any existing ranked timer to avoid overlapping
         if (rankedMapCountDownTimer != null) {
@@ -189,7 +216,7 @@ public class SteamGameService extends Service {
             public void onTick(long millisUntilFinished) {
                 for (TimerUpdateListener listener : listenersList) {
                     if (listener != null) {
-                        listener.onTimerUpdate(millisUntilFinished, true);
+                        listener.onTimerUpdate(millisUntilFinished, true, false);
                     }
                 }
             }
@@ -289,7 +316,7 @@ public class SteamGameService extends Service {
                                     "battle_royale_map", "battle_royale_asset", "battle_royale_remainingSecs",
                                     "next_battle_royale_map", "next_battle_royale_readableDate_start",
                                     "battle_royale_next_readableDate_end", "battle_royale_next_DurationInMinutes",
-                                    false);
+                                    false, false );
                         } finally {
                             latch.countDown();
                         }
@@ -318,7 +345,14 @@ public class SteamGameService extends Service {
                                     "ranked_map", "ranked_asset", "ranked_remainingSecs",
                                     "next_ranked_map", "next_ranked_readableDate_start",
                                     "next_ranked_readableDate_end", "next_ranked_DurationInMinutes",
-                                    true);
+                                    true, false);
+                            // For Arenas Maps
+                            parseMapRotation(response, intent,
+                                    "ltm", "current", "next",
+                                    "arenas_map", "arenas_asset", "arenas_remainingSecs",
+                                    "next_arenas_map", "next_arenas_readableDate_start",
+                                    "next_arenas_readableDate_end", "next_arenas_DurationInMinutes",
+                                    false, true);
                         } finally {
                             latch.countDown();
                         }
@@ -341,7 +375,7 @@ public class SteamGameService extends Service {
             JSONObject currentMap = currentMode.getJSONObject("current");
             extractMapData(currentMap, intent, "battle_royale_map", "battle_royale_asset", "battle_royale_remainingSecs");
             long milliSeconds = currentMap.getLong("remainingSecs") * 1000;
-            startMapTimer(milliSeconds);
+            startPublicMapTimer(milliSeconds);
             // Parse next map rotation data
             JSONObject nextMap = currentMode.getJSONObject("next");
             extractMapData(nextMap, intent, "next_battle_royale_map", "next_battle_royale_readableDate_start", "battle_royale_next_readableDate_end", "battle_royale_next_DurationInMinutes");
@@ -352,7 +386,7 @@ public class SteamGameService extends Service {
     public void parseMapRotation(JSONObject response, Intent intent, String modeKey, String currentMapKey, String nextMapKey,
                                  String mapNameKey, String assetKey, String remainingSecsKey,
                                  String nextMapNameKey, String nextStartKey, String nextEndKey,
-                                 String nextDurationKey, boolean isRanked) {
+                                 String nextDurationKey, boolean isRanked, boolean isArenas) {
         try {
             JSONObject currentMap = null;
             JSONObject nextMap = null;
@@ -372,8 +406,10 @@ public class SteamGameService extends Service {
             long milliSeconds = currentMap.getLong("remainingSecs") * 1000;
             if (isRanked) {
                 startRankedMapTimer(milliSeconds);
+            }else if(isArenas){
+                startArenasMapTimer(milliSeconds);
             } else {
-                startMapTimer(milliSeconds);
+                startPublicMapTimer(milliSeconds);
             }
             // Parse next map rotation data
             extractMapData(nextMap, intent, nextMapNameKey, nextStartKey, nextEndKey, nextDurationKey);
@@ -381,6 +417,7 @@ public class SteamGameService extends Service {
             Log.e(TAG, "Error fetching map rotation data: " + e.getMessage());
         }
     }
+
 
     public void parseRankedMapRotation(JSONObject response, Intent intent) {
         try {

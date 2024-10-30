@@ -1,7 +1,9 @@
 <resources>
+    <color name="transparent_black_dark">#EF000000</color>
+    <color name="transparent_black_light">#EF121212</color>
     <color name="semi_transparent_black">#A7000000</color>
     <color name="semi_transparent_orange">#A6FFCC80</color>
-    <color name="lighter_semi_transparent_black">#A6504B2D</color>
+    <color name="transparent_black_focus">#EF85761E</color>
     <color name="white">#FFF</color>
     <color name="black">#000</color>
     <color name="yellow">#FFEB3B</color>

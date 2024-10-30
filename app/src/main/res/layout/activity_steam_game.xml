@@ -1,9 +1,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <!-- Game Poster Image -->
     <ImageView
         android:id="@+id/game_poster"
@@ -23,7 +21,45 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:visibility="gone" />
-    <!-- Toolbar -->
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:elevation="1dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+        <!-- Toolbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="wrap_content"
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+        <!-- Side Menu -->
+        <androidx.drawerlayout.widget.DrawerLayout
+            android:id="@+id/drawer_layout"
+            android:layout_width="400dp"
+            android:layout_height="400dp"
+            android:elevation="1dp"
+            android:layout_marginStart="12dp"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintStart_toStartOf="@id/toolbar">
+            <!-- Drawer content -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:orientation="vertical">
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </LinearLayout>
+        </androidx.drawerlayout.widget.DrawerLayout>
+    </LinearLayout>
 
     <!-- Main Panel -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -38,15 +74,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="0dp"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/semi_transparent_black"
-            app:layout_constraintStart_toStartOf="@+id/overview"
-            app:layout_constraintBottom_toTopOf="@+id/overview"
-            app:layout_constraintEnd_toEndOf="@+id/max_requirements_layout"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+
         <!-- Game Title -->
         <TextView
             android:id="@+id/title"
@@ -71,7 +100,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/title">
                     <TextView
-                        android:id="@+id/game_mode"
+                        android:id="@+id/public_game_mode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Public Game"
@@ -83,47 +112,47 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
                     <TextView
-                        android:id="@+id/current_map"
+                        android:id="@+id/public_map"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/game_map"
                         android:textColor="@android:color/holo_orange_light"
                         android:textSize="18sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/game_mode" />
+                        app:layout_constraintTop_toBottomOf="@+id/public_game_mode" />
 
                     <TextView
-                        android:id="@+id/map_duration"
+                        android:id="@+id/public_map_duration"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/game_map_duration"
                         android:textColor="@android:color/white"
                         android:textSize="18sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/current_map" />
+                        app:layout_constraintTop_toBottomOf="@+id/public_map" />
 
                     <TextView
-                        android:id="@+id/next_map"
+                        android:id="@+id/next_public_map"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/next_map_name"
                         android:textColor="@android:color/holo_orange_light"
                         android:textSize="11sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/map_duration" />
+                        app:layout_constraintTop_toBottomOf="@+id/public_map_duration" />
 
                     <TextView
-                        android:id="@+id/next_map_duration"
+                        android:id="@+id/next_public_map_duration"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/_90_min"
                         android:textColor="@android:color/white"
                         android:textSize="11sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/next_map" />
+                        app:layout_constraintTop_toBottomOf="@+id/next_public_map" />
 
                     <TextView
-                        android:id="@+id/next_map_start_date"
+                        android:id="@+id/next_public_map_start_date"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
@@ -131,18 +160,26 @@
                         android:textColor="@android:color/holo_orange_light"
                         android:textSize="11sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/next_map_duration" />
+                        app:layout_constraintTop_toBottomOf="@+id/next_public_map_duration" />
 
                     <TextView
-                        android:id="@+id/next_map_end_date"
+                        android:id="@+id/next_public_map_end_date"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/map_end_date"
                         android:textColor="@android:color/white"
                         android:textSize="11sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/next_map_start_date" />
+                        app:layout_constraintTop_toBottomOf="@+id/next_public_map_start_date" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
+        <HorizontalScrollView
+            android:id="@+id/achievement_menu_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/title"
+            app:layout_constraintStart_toEndOf="@+id/public_map_layout"
+            app:layout_constraintEnd_toStartOf="@id/ranked_map_layout"
+            android:fillViewport="true">
                 <LinearLayout
                     android:id="@+id/achievement_menu"
                     android:layout_width="0dp"
@@ -155,7 +192,10 @@
                     app:layout_constraintEnd_toStartOf="@id/ranked_map_layout"
                     >
                 </LinearLayout>
-                <!-- Next game map in rotation section -->
+        </HorizontalScrollView>
+
+
+        <!-- Ranked Game Widget -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/ranked_map_layout"
                     android:layout_width="wrap_content"
@@ -241,76 +281,143 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/next_ranked_map_start_date" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
-        <!-- Side Menu -->
-        <androidx.drawerlayout.widget.DrawerLayout
-            android:id="@+id/drawer_layout"
-            android:layout_width="200dp"
-            android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/max_requirements_layout"
-            app:layout_constraintBottom_toTopOf="@id/toolbar"
-            app:layout_constraintStart_toStartOf="parent">
-            <!-- Drawer content -->
-            <LinearLayout
+        <!-- arenas Game Widget -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/arenas_map_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="@drawable/rounded_border_transparent"
+            app:layout_constraintStart_toStartOf="@id/min_requirements_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/overview">
+            <TextView
+                android:id="@+id/arenas_game_mode"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="start"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:text="Arenas Game"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:id="@+id/arenas_map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/game_map"
+                android:textColor="@android:color/holo_orange_light"
+                android:textSize="18sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/arenas_game_mode"/>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
-            </LinearLayout>
-        </androidx.drawerlayout.widget.DrawerLayout>
+            <TextView
+                android:id="@+id/arenas_map_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/game_map_duration"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/arenas_map" />
+            <TextView
+                android:id="@+id/next_arenas_map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:text="@string/next_map_name"
+                android:textColor="@android:color/holo_orange_light"
+                android:textSize="11sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/arenas_map_duration" />
 
+            <TextView
+                android:id="@+id/next_arenas_map_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/_90_min"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textAlignment="textEnd"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/next_arenas_map" />
+
+            <TextView
+                android:id="@+id/next_arenas_map_start_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="2"
+                android:text="@string/map_start_date"
+                android:textColor="@android:color/holo_orange_light"
+                android:textSize="11sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/next_arenas_map_duration" />
+
+            <TextView
+                android:id="@+id/next_arenas_map_end_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text="@string/map_end_date"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/next_arenas_map_start_date" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Main Poster layout with WebView -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/max_requirements_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="12dp"
             android:background="@drawable/rounded_border_transparent"
-            app:layout_constraintStart_toStartOf="@id/public_map_layout"
-            app:layout_constraintEnd_toEndOf="@id/public_map_layout"
-            app:layout_constraintTop_toBottomOf="@+id/public_map_layout">
+            android:padding="12dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/youtube_webview">
+
             <TextView
                 android:id="@+id/max_requirements"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 android:text="@string/max_requirements"
                 android:textColor="@android:color/white"
                 android:textSize="11sp"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                app:layout_constraintTop_toTopOf="@+id/max_requirements_layout"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/max_requirements_layout" />
         </androidx.constraintlayout.widget.ConstraintLayout>
-        <LinearLayout
+
+        <WebView
+            android:id="@+id/youtube_webview"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:orientation="vertical"
+            android:background="@drawable/video_item_background"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             app:layout_constraintStart_toEndOf="@id/public_map_layout"
             app:layout_constraintEnd_toStartOf="@id/ranked_map_layout"
-            app:layout_constraintTop_toBottomOf="@id/achievement_menu"
+            app:layout_constraintTop_toBottomOf="@id/achievement_menu_layout"
             app:layout_constraintBottom_toTopOf="@id/overview"
-            >
-            <!-- Main Poster layout with WebView -->
-            <WebView
-                android:id="@+id/youtube_webview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/video_item_background"
-                android:focusable="true"
-                android:focusableInTouchMode="true" />
-        </LinearLayout>
+            />
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/min_requirements_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:padding="12dp"
             android:background="@drawable/rounded_border_transparent"
-            app:layout_constraintStart_toStartOf="@id/ranked_map_layout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/youtube_webview"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ranked_map_layout">
+            >
             <TextView
                 android:id="@+id/min_requirements"
                 android:layout_width="wrap_content"
@@ -318,8 +425,8 @@
                 android:text="@string/min_requirements"
                 android:textColor="@android:color/white"
                 android:textSize="11sp"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 android:background="@drawable/achievement_requirements_selector"
                 app:layout_constraintTop_toTopOf="@+id/min_requirements_layout"
                 app:layout_constraintStart_toStartOf="parent" />

@@ -11,8 +11,12 @@ import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Movie;
@@ -62,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     private PowerManager.WakeLock wakeLock;
     private SteamGameService steamGameService;
     private boolean bound;
+    private ActionBarDrawerToggle drawerToggle;
 
     // Service Connection
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -87,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
         initializeViews();
         initializeWakeLock();
         createButtons();
+        //createDrawer();
         initializeRetrofit();
         initializeDatabase();
         fetchMovies();
@@ -99,6 +105,23 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
                 ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATION_PERMISSION);
             }
         }
+    }
+    private void createDrawer() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        // Initialize DrawerLayout
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+    }
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        // Handle action bar item clicks
+        if (drawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -539,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     }
 
     @Override
-    public void onTimerUpdate(long durationInMillis, boolean isRanked) {
+    public void onTimerUpdate(long durationInMillis, boolean isRanked, boolean isArenas) {
 
     }
 

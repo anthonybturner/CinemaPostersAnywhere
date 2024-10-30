@@ -4,72 +4,56 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Main Panel -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/main_panel"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <!-- ImageView for Movie Poster -->
+    <ImageView
+        android:id="@+id/movie_poster"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/movie_poster_image_container"
+        android:src="@drawable/cinema"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-        <!-- Movie Poster Image -->
-        <!-- ProgressBar for Loading State -->
-        <ImageView
-            android:id="@+id/movie_poster"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:contentDescription="@string/movie_poster_image_container"
-            android:scaleType="centerCrop"
-            android:src="@drawable/cinema"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <ProgressBar
-            android:id="@+id/movie_progress_bar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="256dp"
-            android:layout_height="256dp"
-            android:indeterminate="false"
-            android:progressDrawable="@drawable/circular_progress_bar"
-            android:visibility="gone"
-            android:max="100"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+    <!-- ProgressBar for Loading State -->
+    <ProgressBar
+        android:id="@+id/movie_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="256dp"
+        android:layout_height="256dp"
+        android:indeterminate="false"
+        android:visibility="gone"
+        android:max="100"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- TextView to Show Progress -->
-        <TextView
-            android:id="@+id/movie_progress_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/progress_percentage"
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
-            android:padding="8dp"
-            android:textAlignment="center"
-            android:background="@color/semi_transparent_black"
-            android:visibility="visible"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
+    <!-- TextView to Show Progress Percentage -->
+    <TextView
+        android:id="@+id/movie_progress_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/progress_percentage"
+        android:textColor="@android:color/white"
+        android:background="@color/semi_transparent_black"
+        android:padding="8dp"
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
         <!-- Top Menu with Movie Category and Title -->
         <LinearLayout
             android:id="@+id/top_menu"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dp"
             android:background="@color/semi_transparent_black"
             android:elevation="4dp"
-            android:layout_marginStart="128dp"
+            android:padding="24dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -186,17 +170,16 @@
         </LinearLayout>
 
 
-        <!-- Left Pane: Side Button Menu -->
         <LinearLayout
-            android:id="@+id/side_button_menu"
-            android:layout_width="128dp"
-            android:layout_height="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center"
-            android:background="@color/semi_transparent_black"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            android:elevation="1dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/top_menu"
+            >
             <!-- Buttons for different categories -->
             <Button
                 android:id="@+id/button_all"
@@ -253,15 +236,12 @@
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
         </LinearLayout>
-        <!-- Movie Overview Overlay -->
+
         <TextView
             android:id="@+id/movie_overview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:layout_marginStart="128dp"
-            android:paddingStart="2dp"
-            android:paddingEnd="12dp"
+            android:padding="24dp"
             android:background="@color/semi_transparent_black"
             android:text="@string/movie_overview"
             android:textColor="@android:color/white"
@@ -271,7 +251,5 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -32,6 +32,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Video;
@@ -80,6 +81,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     private ActionBarDrawerToggle drawerToggle;
     private TextView pubMapDurationTextView;
     private TextView rankedMapDurationTextView;
+    private TextView arenasMapDurationTextView;
 
     // Video Management
     private final List<Video> videoList = new ArrayList<>();
@@ -147,13 +149,16 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     }
 
     @Override
-    public void onTimerUpdate(long durationInMillis,boolean isRanked) {
+    public void onTimerUpdate(long durationInMillis,boolean isRanked, boolean isArenas) {
         if(isRanked) {
             updateRankedCountdownTextView(durationInMillis);
-        }else {
-            updateCountdownTextView(durationInMillis);
+        }else if(isArenas) {
+            updateArenasCountdownTextView(durationInMillis);
+        }else if( !isRanked && !isArenas) {
+            updatePublicCountdownTextView(durationInMillis);
         }
     }
+
     @Override
     public void onTimerFinish(boolean isRanked){
 
@@ -202,8 +207,9 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     private void initializeUIComponents() {
         videoAdapter = new VideoAdapter(videoList, this);
         webView = findViewById(R.id.youtube_webview);
-        pubMapDurationTextView = findViewById(R.id.map_duration);
+        pubMapDurationTextView = findViewById(R.id.public_map_duration);
         rankedMapDurationTextView = findViewById(R.id.ranked_map_duration);
+        arenasMapDurationTextView = findViewById(R.id.arenas_map_duration);
 
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
@@ -315,12 +321,8 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-            }
-        });
+        webView.setWebViewClient(new WebViewClient() {});
+
      // adjustWebViewSize();
     }
     private void adjustWebViewSize() {
@@ -395,7 +397,8 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
                createMapInfo(intent);
                posterImageUrl = intent.getStringExtra("battle_royale_asset");//If a map, use the map's image for the background of the activity
             }else{
-                hideGameMapInfo();
+              //  hideGameMapInfo();
+                clearGameMapInfo();
                 posterImageUrl = intent.getStringExtra("poster_image_url");//Otherwise, use the steam game poster for the background
             }
             final String posterImage = posterImageUrl;
@@ -412,11 +415,85 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             }
         }
     }
+    private void clearGameMapInfo() {
+        clearPublicGameMap();
+        clearPublicNextMap();
+        clearRankedGameMap();
+        clearRankedNextMap();
+        clearArenasGameMap();
+        clearArenasNextMap();
+    }
+    private void clearPublicGameMap() {
+        TextView gameModeTextView = findViewById(R.id.public_game_mode);
+        gameModeTextView.setText("");
+
+        TextView durationTextView = findViewById(R.id.public_map_duration);
+        durationTextView.setText("");
+
+        TextView publicMapTextView = findViewById(R.id.public_map);
+        publicMapTextView.setText("");
+
+    }
+    private void clearRankedGameMap() {
+        TextView gameModeTextView = findViewById(R.id.ranked_game_mode);
+        gameModeTextView.setText("");
+
+        TextView durationTextView = findViewById(R.id.ranked_map_duration);
+        durationTextView.setText("");
+
+        TextView rankedMapTextView = findViewById(R.id.ranked_map);
+        rankedMapTextView.setText("");
+    }
+    private void clearArenasGameMap() {
+    }
+    private void clearPublicNextMap() {
+        TextView nextMapTextView = findViewById(R.id.next_public_map);
+        nextMapTextView.setText("");
+
+        TextView nextMapDuractionTextView = findViewById(R.id.next_public_map_duration);
+        nextMapDuractionTextView.setText("");
+
+        TextView nextMapStartDateTextView = findViewById(R.id.next_public_map_start_date);
+        nextMapStartDateTextView.setText("");
+
+        TextView nextMapEndDateTextView = findViewById(R.id.next_public_map_end_date);
+        nextMapEndDateTextView.setText("");
+    }
+
+    private void clearRankedNextMap(){
+        TextView nextRankedMapTextView = findViewById(R.id.next_ranked_map);
+        nextRankedMapTextView.setText("");
+
+        TextView mapDuractionTextView = findViewById(R.id.next_ranked_map_duration);
+        mapDuractionTextView.setText("");
+
+        TextView startDateTextView = findViewById(R.id.next_ranked_map_start_date);
+        startDateTextView.setText("");
+
+        TextView mapEndDateTextView = findViewById(R.id.next_ranked_map_end_date);
+        mapEndDateTextView.setText("");
+    }
+    private void clearArenasNextMap() {
+        TextView nextArenasMapTextView = findViewById(R.id.next_arenas_map);
+        nextArenasMapTextView.setText("");
+
+        TextView mapDuractionTextView = findViewById(R.id.next_arenas_map_duration);
+        mapDuractionTextView.setText("");
+
+        TextView startDateTextView = findViewById(R.id.next_arenas_map_start_date);
+        startDateTextView.setText("");
+
+        TextView mapEndDateTextView = findViewById(R.id.next_arenas_map_end_date);
+        mapEndDateTextView.setText("");
+    }
+
     private void createMapInfo(Intent intent) {
         createPublicGameMap(intent);
         createPublicNextMap(intent);
         createRankedGameMap(intent);
         createRankedNextMap(intent);
+        createArenasGameMap(intent);
+        createArenasNextMap(intent);
     }
     private void hideGameMapInfo() {
         findViewById(R.id.public_map_layout).setVisibility(View.GONE);
@@ -424,7 +501,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     }
 
     private void createPublicGameMap(Intent intent) {
-        TextView currentMapTextView = findViewById(R.id.current_map);
+        TextView currentMapTextView = findViewById(R.id.public_map);
         currentMapTextView.setText(String.format("Map: %s", intent.getStringExtra("battle_royale_map")));
         currentMapTextView.setVisibility(View.VISIBLE);
         findViewById(R.id.public_map_layout).setVisibility(View.VISIBLE);
@@ -434,18 +511,26 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         currentMapTextView.setText(String.format("Map: %s", intent.getStringExtra("ranked_map")));
         findViewById(R.id.ranked_map_layout).setVisibility(View.VISIBLE);
     }
+    private void createArenasGameMap(Intent intent) {
+        TextView currentMapTextView = findViewById(R.id.arenas_map);
+        currentMapTextView.setText(String.format("Map: %s", intent.getStringExtra("arenas_map")));
+        findViewById(R.id.arenas_map_layout).setVisibility(View.VISIBLE);
+
+        ConstraintLayout mapLayout = findViewById(R.id.arenas_map_layout);
+        String imageUrl =  intent.getStringExtra("arenas_asset");
+    }
     private void createPublicNextMap(Intent intent) {
-        TextView nextMapTextView = findViewById(R.id.next_map);
+        TextView nextMapTextView = findViewById(R.id.next_public_map);
         nextMapTextView.setText(String.format("Next Map: %s", intent.getStringExtra("next_battle_royale_map")));
-        TextView nextMapDuractionTextView = findViewById(R.id.next_map_duration);
+        TextView nextMapDuractionTextView = findViewById(R.id.next_public_map_duration);
         nextMapDuractionTextView.setText(String.format("Duration: %s Minutes", intent.getStringExtra("battle_royale_next_DurationInMinutes")));
 
-        TextView nextMapStartDateTextView = findViewById(R.id.next_map_start_date);
+        TextView nextMapStartDateTextView = findViewById(R.id.next_public_map_start_date);
         String nextReadableDateStart = intent.getStringExtra("next_battle_royale_readableDate_start");
         nextReadableDateStart = Converters.convertToFriendlyDate(nextReadableDateStart);
         nextMapStartDateTextView.setText(String.format("Start Date: %s", nextReadableDateStart));
 
-        TextView nextMapEndDateTextView = findViewById(R.id.next_map_end_date);
+        TextView nextMapEndDateTextView = findViewById(R.id.next_public_map_end_date);
         String nextReadableDateEnd = intent.getStringExtra("battle_royale_next_readableDate_end");
         nextReadableDateEnd = Converters.convertToFriendlyDate(nextReadableDateEnd);
         nextMapEndDateTextView.setText(String.format("End Date: %s",nextReadableDateEnd ));
@@ -468,8 +553,25 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         nextReadableDateEnd = Converters.convertToFriendlyDate(nextReadableDateEnd);
         mapEndDateTextView.setText(String.format("End Date: %s",nextReadableDateEnd ));
     }
+    private void createArenasNextMap(Intent intent) {
+        TextView nextArenasMapTextView = findViewById(R.id.next_arenas_map);
+        nextArenasMapTextView.setText(String.format("Next Map: %s", intent.getStringExtra("next_arenas_map")));
 
-    private void updateCountdownTextView(long millisUntilFinished) {
+        TextView mapDuractionTextView = findViewById(R.id.next_arenas_map_duration);
+        mapDuractionTextView.setText(String.format("Duration: %s Minutes", intent.getStringExtra("next_arenas_DurationInMinutes")));
+
+        TextView startDateTextView = findViewById(R.id.next_arenas_map_start_date);
+        String nextReadableDateStart = intent.getStringExtra("next_arenas_readableDate_start");
+        nextReadableDateStart = Converters.convertToFriendlyDate(nextReadableDateStart);
+        startDateTextView.setText(String.format("Start Date: %s", nextReadableDateStart));
+
+        TextView mapEndDateTextView = findViewById(R.id.next_arenas_map_end_date);
+        String nextReadableDateEnd = intent.getStringExtra("next_arenas_readableDate_end");
+        nextReadableDateEnd = Converters.convertToFriendlyDate(nextReadableDateEnd);
+        mapEndDateTextView.setText(String.format("End Date: %s",nextReadableDateEnd ));
+    }
+
+    private void updatePublicCountdownTextView(long millisUntilFinished) {
         String time = CalculateTime(millisUntilFinished);
         pubMapDurationTextView.setText(time);
     }
@@ -477,7 +579,10 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         String time = CalculateTime(millisUntilFinished);
         rankedMapDurationTextView.setText(time);
     }
-
+    private void updateArenasCountdownTextView(long millisUntilFinished) {
+        String time = CalculateTime(millisUntilFinished);
+        arenasMapDurationTextView.setText(time);
+    }
     private void createMinRequirements(String minimumRequirements, String posterImage) {
         TextView minRequirementsTextView = findViewById(R.id.min_requirements);
         if(Objects.equals(minimumRequirements, "")) {
@@ -525,9 +630,6 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         textView.setSingleLine(true);
         textView.setMarqueeRepeatLimit(-1);  // -1 for infinite marquee
         textView.setHorizontallyScrolling(true);
-        textView.setFocusable(true);
-        textView.setFocusableInTouchMode(true);
-        textView.requestFocus();
         textView.setSelected(true); // Important for marquee
     }
 
@@ -572,7 +674,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     private @NonNull ImageView CreateAchievementIconView(String iconUrl) {
         ImageView iconImageView = new ImageView(this);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                80, LinearLayout.LayoutParams.MATCH_PARENT);
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
         layoutParams.gravity = Gravity.CENTER;
         iconImageView.setLayoutParams(layoutParams);
         iconImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE); // Set scale type
@@ -594,7 +696,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         achievementCard.addView(iconImageView);
 
         // Create TextView for achievement name
-        TextView nameTextView = CreateAchievementTextView(name, 6,LinearLayout.LayoutParams.WRAP_CONTENT);
+        TextView nameTextView = CreateAchievementTextView(name, 11,LinearLayout.LayoutParams.WRAP_CONTENT);
         setTextViewMarquee(nameTextView);
         achievementCard.addView(nameTextView);
 
@@ -604,7 +706,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         achievementCard.addView(statusTextView);
 
         // Create TextView for achievement description (unlocked/locked)
-        TextView descTextView =  CreateAchievementTextView(desc, 5, 128);
+        TextView descTextView =  CreateAchievementTextView(desc, 8, 128);
         setTextViewMarquee(descTextView);
         achievementCard.addView(descTextView);
         return achievementCard;
@@ -619,7 +721,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         achievementCard.setPadding(8, 8, 8, 8); // Add padding between achievements
         // Create LayoutParams and set the margins
         LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(
-                80 ,
+                 124,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
         linearLayoutParams.setMargins(2, 2, 2, 2); // Left, Top, Right, Bottom margins in pixels
@@ -638,6 +740,9 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     }
     @Override
     protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+        }
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(closeNowPlayingReceiver);
         // Unregister the BroadcastReceiver to avoid memory leaks
