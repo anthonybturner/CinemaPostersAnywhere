@@ -2,6 +2,7 @@ package com.anthonybturner.cinemapostersanywhere;
 
 import static com.anthonybturner.cinemapostersanywhere.MainActivity.CLOSE_NOW_PLAYING_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.MainActivity.APEX_LEGENDS_API_UPDATE_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.utilities.Converters.CalculateTime;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
@@ -12,7 +13,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.text.Html;
 import android.text.TextUtils;
@@ -24,7 +24,6 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -33,7 +32,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Video;
@@ -80,7 +78,8 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     private RecyclerView recyclerView;
     private VideoAdapter videoAdapter;
     private ActionBarDrawerToggle drawerToggle;
-    private TextView countdownTimerTextView;
+    private TextView pubMapDurationTextView;
+    private TextView rankedMapDurationTextView;
 
     // Video Management
     private final List<Video> videoList = new ArrayList<>();
@@ -148,12 +147,15 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     }
 
     @Override
-    public void onTimerUpdate(long durationInMillis) {
-        updateCountdownTextView(durationInMillis);
+    public void onTimerUpdate(long durationInMillis,boolean isRanked) {
+        if(isRanked) {
+            updateRankedCountdownTextView(durationInMillis);
+        }else {
+            updateCountdownTextView(durationInMillis);
+        }
     }
-
     @Override
-    public void onTimerFinish() {
+    public void onTimerFinish(boolean isRanked){
 
     }
 
@@ -200,7 +202,9 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     private void initializeUIComponents() {
         videoAdapter = new VideoAdapter(videoList, this);
         webView = findViewById(R.id.youtube_webview);
-        countdownTimerTextView = findViewById(R.id.map_duration);
+        pubMapDurationTextView = findViewById(R.id.map_duration);
+        rankedMapDurationTextView = findViewById(R.id.ranked_map_duration);
+
         // Initialize RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -387,11 +391,11 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             String posterImageUrl =  "";
 
             SetAchievements(intent);
-            if(intent.hasExtra("map")){
+            if(intent.hasExtra("battle_royale_map")){//pull game info for public and ranked
                createMapInfo(intent);
-               posterImageUrl = intent.getStringExtra("asset");//If a map, use the map's image for the background of the activity
+               posterImageUrl = intent.getStringExtra("battle_royale_asset");//If a map, use the map's image for the background of the activity
             }else{
-                hideGameMapView();
+                hideGameMapInfo();
                 posterImageUrl = intent.getStringExtra("poster_image_url");//Otherwise, use the steam game poster for the background
             }
             final String posterImage = posterImageUrl;
@@ -409,52 +413,69 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         }
     }
     private void createMapInfo(Intent intent) {
-        createGameMapView(intent);
-        createNextMapView(intent);
+        createPublicGameMap(intent);
+        createPublicNextMap(intent);
+        createRankedGameMap(intent);
+        createRankedNextMap(intent);
     }
-    private void hideGameMapView() {
-        TextView currentMapTextView = findViewById(R.id.current_map);
-        currentMapTextView.setVisibility(View.GONE);
-        findViewById(R.id.current_map_layout).setVisibility(View.GONE);
-        findViewById(R.id.next_map_layout).setVisibility(View.GONE);
+    private void hideGameMapInfo() {
+        findViewById(R.id.public_map_layout).setVisibility(View.GONE);
+        findViewById(R.id.ranked_map_layout).setVisibility(View.GONE);
     }
 
-    private void createNextMapView(Intent intent) {
+    private void createPublicGameMap(Intent intent) {
+        TextView currentMapTextView = findViewById(R.id.current_map);
+        currentMapTextView.setText(String.format("Map: %s", intent.getStringExtra("battle_royale_map")));
+        currentMapTextView.setVisibility(View.VISIBLE);
+        findViewById(R.id.public_map_layout).setVisibility(View.VISIBLE);
+    }
+    private void createRankedGameMap(Intent intent) {
+        TextView currentMapTextView = findViewById(R.id.ranked_map);
+        currentMapTextView.setText(String.format("Map: %s", intent.getStringExtra("ranked_map")));
+        findViewById(R.id.ranked_map_layout).setVisibility(View.VISIBLE);
+    }
+    private void createPublicNextMap(Intent intent) {
         TextView nextMapTextView = findViewById(R.id.next_map);
-        nextMapTextView.setText(String.format("Next Map: %s", intent.getStringExtra("next_map")));
+        nextMapTextView.setText(String.format("Next Map: %s", intent.getStringExtra("next_battle_royale_map")));
         TextView nextMapDuractionTextView = findViewById(R.id.next_map_duration);
-        nextMapDuractionTextView.setText(String.format("%s Minutes", intent.getStringExtra("next_DurationInMinutes")));
+        nextMapDuractionTextView.setText(String.format("Duration: %s Minutes", intent.getStringExtra("battle_royale_next_DurationInMinutes")));
 
         TextView nextMapStartDateTextView = findViewById(R.id.next_map_start_date);
-        String nextReadableDateStart = intent.getStringExtra("next_readableDate_start");
+        String nextReadableDateStart = intent.getStringExtra("next_battle_royale_readableDate_start");
         nextReadableDateStart = Converters.convertToFriendlyDate(nextReadableDateStart);
         nextMapStartDateTextView.setText(String.format("Start Date: %s", nextReadableDateStart));
 
         TextView nextMapEndDateTextView = findViewById(R.id.next_map_end_date);
-        String nextReadableDateEnd = intent.getStringExtra("next_readableDate_end");
+        String nextReadableDateEnd = intent.getStringExtra("battle_royale_next_readableDate_end");
         nextReadableDateEnd = Converters.convertToFriendlyDate(nextReadableDateEnd);
         nextMapEndDateTextView.setText(String.format("End Date: %s",nextReadableDateEnd ));
+
     }
+    private void createRankedNextMap(Intent intent) {
+        TextView nextRankedMapTextView = findViewById(R.id.next_ranked_map);
+        nextRankedMapTextView.setText(String.format("Next Map: %s", intent.getStringExtra("next_ranked_map")));
 
-    private void createGameMapView(Intent intent) {
-        TextView currentMapTextView = findViewById(R.id.current_map);
-        currentMapTextView.setText(String.format("%s", intent.getStringExtra("map")));
-        currentMapTextView.setVisibility(View.VISIBLE);
-        findViewById(R.id.current_map_layout).setVisibility(View.VISIBLE);
-        findViewById(R.id.next_map_layout).setVisibility(View.VISIBLE);
+        TextView mapDuractionTextView = findViewById(R.id.next_ranked_map_duration);
+        mapDuractionTextView.setText(String.format("Duration: %s Minutes", intent.getStringExtra("next_ranked_DurationInMinutes")));
 
-        //long remainingSecs = intent.getLongExtra("remainingSecs", 0);
-        //long durationInMillis = remainingSecs * 1000;
-        //onTimerUpdatepTimer(durationInMillis);
+        TextView startDateTextView = findViewById(R.id.next_ranked_map_start_date);
+        String nextReadableDateStart = intent.getStringExtra("next_ranked_readableDate_start");
+        nextReadableDateStart = Converters.convertToFriendlyDate(nextReadableDateStart);
+        startDateTextView.setText(String.format("Start Date: %s", nextReadableDateStart));
+
+        TextView mapEndDateTextView = findViewById(R.id.next_ranked_map_end_date);
+        String nextReadableDateEnd = intent.getStringExtra("next_ranked_readableDate_end");
+        nextReadableDateEnd = Converters.convertToFriendlyDate(nextReadableDateEnd);
+        mapEndDateTextView.setText(String.format("End Date: %s",nextReadableDateEnd ));
     }
 
     private void updateCountdownTextView(long millisUntilFinished) {
-        long totalSeconds = millisUntilFinished / 1000;
-        long hours = totalSeconds / 3600;
-        long minutes = (totalSeconds % 3600) / 60;
-        long seconds = totalSeconds % 60;
-        // Update TextView with formatted time in HH:MM:SS format
-        countdownTimerTextView.setText(String.format("Time Left: %02d:%02d:%02d", hours, minutes, seconds));
+        String time = CalculateTime(millisUntilFinished);
+        pubMapDurationTextView.setText(time);
+    }
+    private void updateRankedCountdownTextView(long millisUntilFinished) {
+        String time = CalculateTime(millisUntilFinished);
+        rankedMapDurationTextView.setText(time);
     }
 
     private void createMinRequirements(String minimumRequirements, String posterImage) {

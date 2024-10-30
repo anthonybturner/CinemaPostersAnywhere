@@ -19,7 +19,7 @@ import com.anthonybturner.cinemapostersanywhere.Models.Movie;
 import com.anthonybturner.cinemapostersanywhere.Models.Video;
 import com.anthonybturner.cinemapostersanywhere.interfaces.OnVideoDataFetchedListener;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
-import com.anthonybturner.cinemapostersanywhere.services.FlaskApiService;
+import com.anthonybturner.cinemapostersanywhere.services.PostersApiService;
 import com.anthonybturner.cinemapostersanywhere.data.MovieDao;
 import com.anthonybturner.cinemapostersanywhere.data.AppDatabase;
 import com.anthonybturner.cinemapostersanywhere.services.WebSocketService;
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     private boolean showingNowPlaying = false;
     private boolean isUsingSteamGameSystem = false;
     private List<Movie> movieList = new ArrayList<>();
-    private FlaskApiService movieApiService;
+    private PostersApiService movieApiService;
     private MovieDao movieDao;
     private static boolean slideshowRunning;
     private PowerManager.WakeLock wakeLock;
@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
                 .baseUrl(PLEX_BRIDGE_ADDRESS)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        movieApiService = retrofit.create(FlaskApiService.class);
+        movieApiService = retrofit.create(PostersApiService.class);
     }
 
     private void initializeDatabase() {
@@ -539,12 +539,12 @@ public class MainActivity extends AppCompatActivity implements OnVideoDataFetche
     }
 
     @Override
-    public void onTimerUpdate(long durationInMillis) {
+    public void onTimerUpdate(long durationInMillis, boolean isRanked) {
 
     }
 
     @Override
-    public void onTimerFinish() {
+    public void onTimerFinish(boolean isRanked) {
         hideSteamButton();
     }
 

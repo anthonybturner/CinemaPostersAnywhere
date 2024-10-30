@@ -7,7 +7,7 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.GET;
 
-public interface FlaskApiService {
+public interface PostersApiService {
 
     @GET("/api/posters")
     Call<List<Movie>> getPosters();  // Fetch trending movies from Flask API

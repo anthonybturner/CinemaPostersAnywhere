@@ -3,21 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <!-- Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/semi_transparent_black"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
     <!-- Game Poster Image -->
     <ImageView
         android:id="@+id/game_poster"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:contentDescription="@string/game_poster_image_container"
         android:scaleType="centerCrop"
         android:src="@drawable/cinema"
@@ -32,6 +23,8 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:visibility="gone" />
+    <!-- Toolbar -->
+
     <!-- Main Panel -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main_panel"
@@ -45,132 +38,217 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-        <!-- Top Menu with Game Category and Title -->
-        <LinearLayout
-            android:id="@+id/top_menu"
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="0dp"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/semi_transparent_black"
+            app:layout_constraintStart_toStartOf="@+id/overview"
+            app:layout_constraintBottom_toTopOf="@+id/overview"
+            app:layout_constraintEnd_toEndOf="@+id/max_requirements_layout"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+        <!-- Game Title -->
+        <TextView
+            android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="3"
+            android:text="@string/game_title"
+            android:textColor="@android:color/white"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
             android:background="@drawable/rounded_border_transparent"
-            android:elevation="4dp"
-            android:orientation="horizontal"
-            android:padding="2dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <LinearLayout
-                android:id="@+id/top_menu_stats"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingBottom="12dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-                <!-- Game Title -->
-                <TextView
-                    android:id="@+id/title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/game_title"
-                    android:textColor="@android:color/white"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+            app:layout_constraintEnd_toEndOf="parent" />
                 <!-- Game map section -->
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/current_map_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
+                    android:id="@+id/public_map_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_border_transparent"
+                    android:padding="12dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/title">
+                    <TextView
+                        android:id="@+id/game_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Public Game"
+                        android:textColor="@android:color/white"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textAlignment="center"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
                     <TextView
                         android:id="@+id/current_map"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/game_map"
                         android:textColor="@android:color/holo_orange_light"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
+                        android:textSize="18sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toBottomOf="@+id/game_mode" />
 
                     <TextView
                         android:id="@+id/map_duration"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/game_map_duration"
-                        android:textColor="@android:color/holo_orange_light"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-                <!-- Next game map in rotation section -->
-                <LinearLayout
-                    android:id="@+id/next_map_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/current_map" />
 
                     <TextView
                         android:id="@+id/next_map"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="2"
                         android:text="@string/next_map_name"
-                        android:textColor="@android:color/white"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/next_map_start_date"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:layout_weight="2"
-                        android:text="@string/map_start_date"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/next_map_end_date"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="2"
-                        android:text="@string/map_end_date"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:textColor="@android:color/holo_orange_light"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/map_duration" />
 
                     <TextView
                         android:id="@+id/next_map_duration"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/_90_min"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/next_map" />
+
+                    <TextView
+                        android:id="@+id/next_map_start_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@string/map_start_date"
+                        android:textColor="@android:color/holo_orange_light"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/next_map_duration" />
+
+                    <TextView
+                        android:id="@+id/next_map_end_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/map_end_date"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/next_map_start_date" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+                <LinearLayout
+                    android:id="@+id/achievement_menu"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:background="@drawable/rounded_border_transparent"
+                    app:layout_constraintTop_toBottomOf="@id/title"
+                    app:layout_constraintStart_toEndOf="@+id/public_map_layout"
+                    app:layout_constraintEnd_toStartOf="@id/ranked_map_layout"
+                    >
+                </LinearLayout>
+                <!-- Next game map in rotation section -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/ranked_map_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:background="@drawable/rounded_border_transparent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/title">
+                    <TextView
+                        android:id="@+id/ranked_game_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ranked Game"
+                        android:textColor="@android:color/white"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textAlignment="center"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                    <TextView
+                        android:id="@+id/ranked_map"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/game_map"
+                        android:textColor="@android:color/holo_orange_light"
+                        android:textSize="18sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/ranked_game_mode"/>
+
+                    <TextView
+                        android:id="@+id/ranked_map_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/game_map_duration"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/ranked_map" />
+                    <TextView
+                        android:id="@+id/next_ranked_map"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:text="@string/next_map_name"
+                        android:textColor="@android:color/holo_orange_light"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/ranked_map_duration" />
+
+                    <TextView
+                        android:id="@+id/next_ranked_map_duration"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/_90_min"
                         android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/achievement_menu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/top_menu">
-        </LinearLayout>
+                        android:textSize="11sp"
+                        android:textAlignment="textEnd"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/next_ranked_map" />
+
+                    <TextView
+                        android:id="@+id/next_ranked_map_start_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="2"
+                        android:text="@string/map_start_date"
+                        android:textColor="@android:color/holo_orange_light"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/next_ranked_map_duration" />
+
+                    <TextView
+                        android:id="@+id/next_ranked_map_end_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:text="@string/map_end_date"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/next_ranked_map_start_date" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
         <!-- Side Menu -->
         <androidx.drawerlayout.widget.DrawerLayout
             android:id="@+id/drawer_layout"
-            android:layout_width="300dp"
+            android:layout_width="200dp"
             android:layout_height="0dp"
-            app:layout_constraintBottom_toTopOf="@id/description_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/achievement_menu">
+            app:layout_constraintTop_toBottomOf="@id/max_requirements_layout"
+            app:layout_constraintBottom_toTopOf="@id/toolbar"
+            app:layout_constraintStart_toStartOf="parent">
             <!-- Drawer content -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -184,14 +262,37 @@
                     android:layout_height="match_parent" />
             </LinearLayout>
         </androidx.drawerlayout.widget.DrawerLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/max_requirements_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="@drawable/rounded_border_transparent"
+            app:layout_constraintStart_toStartOf="@id/public_map_layout"
+            app:layout_constraintEnd_toEndOf="@id/public_map_layout"
+            app:layout_constraintTop_toBottomOf="@+id/public_map_layout">
+            <TextView
+                android:id="@+id/max_requirements"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/max_requirements"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                app:layout_constraintTop_toTopOf="@+id/max_requirements_layout"
+                app:layout_constraintStart_toStartOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
         <LinearLayout
-            android:layout_width="@dimen/sidebar_width"
+            android:layout_width="0dp"
             android:layout_height="0dp"
             android:orientation="vertical"
-            app:layout_constraintHeight_percent=".488"
-            app:layout_constraintStart_toEndOf="@id/drawer_layout"
+            app:layout_constraintStart_toEndOf="@id/public_map_layout"
+            app:layout_constraintEnd_toStartOf="@id/ranked_map_layout"
             app:layout_constraintTop_toBottomOf="@id/achievement_menu"
-            app:layout_constraintWidth_percent="0.5">
+            app:layout_constraintBottom_toTopOf="@id/overview"
+            >
             <!-- Main Poster layout with WebView -->
             <WebView
                 android:id="@+id/youtube_webview"
@@ -201,60 +302,39 @@
                 android:focusable="true"
                 android:focusableInTouchMode="true" />
         </LinearLayout>
-
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/description_layout"
-            android:layout_width="match_parent"
+            android:id="@+id/min_requirements_layout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:padding="12dp"
             android:background="@drawable/rounded_border_transparent"
+            app:layout_constraintStart_toStartOf="@id/ranked_map_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ranked_map_layout">
+            <TextView
+                android:id="@+id/min_requirements"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/min_requirements"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/achievement_requirements_selector"
+                app:layout_constraintTop_toTopOf="@+id/min_requirements_layout"
+                app:layout_constraintStart_toStartOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/overview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_border_transparent"
+            android:text="@string/game_overview"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@android:color/white"
+            android:padding="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-            <TextView
-                android:id="@+id/overview"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:text="@string/game_overview"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                android:textColor="@android:color/white"
-                android:padding="8dp"
-                app:layout_constraintWidth_percent="0.70"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                />
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:paddingStart="0dp"
-                android:paddingEnd="8dp"
-                app:layout_constraintStart_toEndOf="@id/overview"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintWidth_percent="0.30">
-                <TextView
-                    android:id="@+id/min_requirements"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/min_requirements"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:background="@drawable/achievement_requirements_selector"
-                    />
-                <TextView
-                    android:id="@+id/max_requirements"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/max_requirements"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:background="@drawable/achievement_requirements_selector"
-                    />
-            </LinearLayout>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintStart_toStartOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

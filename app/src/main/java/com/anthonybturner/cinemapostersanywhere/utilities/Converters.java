@@ -1,5 +1,7 @@
 package com.anthonybturner.cinemapostersanywhere.utilities;
 
+import android.util.Log;
+
 import androidx.room.TypeConverter;
 
 import java.text.ParseException;
@@ -54,11 +56,17 @@ public class Converters {
             outputFormat.setTimeZone(TimeZone.getDefault());  // Use device's timezone for friendly display
             return outputFormat.format(date);
         } catch (ParseException e) {
-            e.printStackTrace();
+            Log.e("Converters", "Error converting date: " + e.getMessage());
             return readableDate; // Return the original if parsing fails
         }
     }
-
+    public static String CalculateTime(long millisUntilFinished) {
+        long totalSeconds = millisUntilFinished / 1000;
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+        return String.format(Locale.ENGLISH, "Time: %02dh:%02dm:%02ds", hours, minutes, seconds);
+    }
     // Convert a comma-separated String back to List<Integer>
     @TypeConverter
     public static List<Integer> toGenreIdsList(String genreIdsString) {
