@@ -4,6 +4,9 @@ import android.util.Log;
 
 import androidx.room.TypeConverter;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,6 +41,15 @@ public class Converters {
             return result.toString();
         }
     }
+    public static String decodeUrl(String url) {
+        try {
+            // Decode the URL
+            return URLDecoder.decode(url, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return url;  // Return the original if decoding fails
+        }
+    }
 
     public static String convertUnixToReadable(long unixSeconds) {
         Date date = new Date(unixSeconds * 1000L);  // Convert seconds to milliseconds
@@ -47,6 +59,8 @@ public class Converters {
 
     public static String convertToFriendlyDate(String readableDate) {
         try {
+
+            if(readableDate == null || readableDate.isEmpty()) return "";
             // Parse the input date in "yyyy-MM-dd HH:mm:ss" format
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
             inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));  // Assuming date is in UTC if not local time

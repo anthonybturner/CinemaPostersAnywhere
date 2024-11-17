@@ -1,13 +1,9 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -15,12 +11,16 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants;
 import com.bumptech.glide.Glide;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class NowPlayingActivity extends AppCompatActivity {
@@ -28,7 +28,7 @@ public class NowPlayingActivity extends AppCompatActivity {
     private final BroadcastReceiver closeNowPlayingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Objects.equals(intent.getAction(), MainActivity.CLOSE_NOW_PLAYING_ACTION)) {
+            if (Objects.equals(intent.getAction(), MovieConstants.CLOSE_NOW_PLAYING_ACTION)) {
                 finish();
             }
         }
@@ -42,7 +42,7 @@ public class NowPlayingActivity extends AppCompatActivity {
         setupUI(intent);
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 closeNowPlayingReceiver,
-                new IntentFilter(MainActivity.CLOSE_NOW_PLAYING_ACTION)
+                new IntentFilter(MovieConstants.CLOSE_NOW_PLAYING_ACTION)
         );
     }
 
@@ -52,7 +52,77 @@ public class NowPlayingActivity extends AppCompatActivity {
         setTextViewContent(R.id.movie_studio, intent.getStringExtra("studio"));
         setTextViewContent(R.id.movie_ratings, intent.getStringExtra("contentRating"));
         loadImageIntoView(intent.getStringExtra("posterUrl"), findViewById(R.id.movie_poster));
-        setupActorRoles(intent.getBundleExtra("actorBundle"));
+        if(intent.hasExtra("actorBundle")) {
+            setupActorRoles(intent.getBundleExtra("actorBundle"));
+        }
+
+        ConstraintLayout directorsLayout =  findViewById(R.id.directors_layout);
+        String directorsList = "";
+        ArrayList<String> directorNames = intent.getStringArrayListExtra("directorNames");
+        ArrayList<String> directorImages = intent.getStringArrayListExtra("directorImages");
+        for (int i = 0; i < Objects.requireNonNull(directorNames).size(); i++) {
+            String director = directorNames.get(i);
+            assert directorImages != null;
+            String directorImage = directorImages.get(i);
+            LinearLayout directorCard = CreateDirectorsView(director,directorImage);
+            directorsLayout.addView(directorCard);
+        }
+    }
+    private @NonNull LinearLayout CreateDirectorsView(String name, String iconUrl) {
+        LinearLayout directorCard = createDirectorsLayout();
+        // Create ImageView for achievement icon
+        ImageView iconImageView = CreateDirectorsIconView(iconUrl);
+        directorCard.addView(iconImageView);
+
+        // Create TextView for achievement name
+        TextView nameTextView = CreateDirectorsTextView(name, 11,LinearLayout.LayoutParams.WRAP_CONTENT);
+        directorCard.addView(nameTextView);
+
+        return directorCard;
+    }
+
+    private ImageView CreateDirectorsIconView(String iconUrl) {
+        ImageView iconImageView = new ImageView(this);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+        layoutParams.gravity = Gravity.CENTER;
+        iconImageView.setLayoutParams(layoutParams);
+        iconImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE); // Set scale type
+
+        // Use Glide to load the icon image from URL
+        Glide.with(this)
+                .load(iconUrl)
+                .placeholder(R.drawable.placeholder_image) // Optional placeholder while loading
+                .error(R.drawable.error_image) // Optional error image
+                .into(iconImageView);
+        return iconImageView;
+    }
+
+    private TextView CreateDirectorsTextView(String name, int size, int LayoutParamWidth) {
+        TextView achievementTextView = new TextView(this);
+        achievementTextView.setText(name);
+        achievementTextView.setTextSize(size);
+        achievementTextView.setTextColor(getResources().getColor(R.color.white)); // Customize text appearance
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LayoutParamWidth, LinearLayout.LayoutParams.WRAP_CONTENT);
+        achievementTextView.setLayoutParams(layoutParams);
+        return achievementTextView;
+    }
+
+    private LinearLayout createDirectorsLayout() {
+        LinearLayout directorCard = new LinearLayout(this);
+        directorCard.setBackgroundResource(R.drawable.achievement_card_selector);
+        directorCard.setOrientation(LinearLayout.VERTICAL);
+        directorCard.setPadding(8, 8, 8, 8); // Add padding between achievements
+        // Create LayoutParams and set the margins
+        LinearLayout.LayoutParams linearLayoutParams = new LinearLayout.LayoutParams(
+                164,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+       // linearLayoutParams.setMargins(2, 2, 2, 2); // Left, Top, Right, Bottom margins in pixels
+        directorCard.setLayoutParams(linearLayoutParams);
+        return directorCard;
+
     }
 
     private String getFormattedTitle(Intent intent) {

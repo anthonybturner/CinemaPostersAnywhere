@@ -1,6 +1,7 @@
 <resources>
     <color name="transparent_black_dark">#EF000000</color>
     <color name="transparent_black_light">#EF121212</color>
+    <color name="transparent_orange_light">#E4503F1A</color>
     <color name="semi_transparent_black">#A7000000</color>
     <color name="semi_transparent_orange">#A6FFCC80</color>
     <color name="transparent_black_focus">#EF85761E</color>

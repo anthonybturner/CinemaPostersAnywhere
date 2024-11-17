@@ -1,7 +1,7 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import static com.anthonybturner.cinemapostersanywhere.MainActivity.CLOSE_NOW_PLAYING_ACTION;
-import static com.anthonybturner.cinemapostersanywhere.MainActivity.APEX_LEGENDS_API_UPDATE_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.CLOSE_NOW_PLAYING_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.utilities.ApexLegendsAPIConstants.APEX_LEGENDS_API_UPDATE_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.utilities.Converters.CalculateTime;
 
 import android.annotation.SuppressLint;
@@ -26,7 +26,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,8 +40,11 @@ import com.anthonybturner.cinemapostersanywhere.Models.YouTubeVideo;
 import com.anthonybturner.cinemapostersanywhere.adapters.VideoAdapter;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
 import com.anthonybturner.cinemapostersanywhere.interfaces.YouTubeApiService;
+import com.anthonybturner.cinemapostersanywhere.services.ApexLegendsAPIService;
 import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
+import com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants;
+import com.anthonybturner.cinemapostersanywhere.utilities.SteamConstants;
 import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
@@ -69,9 +71,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class SteamGameActivity extends AppCompatActivity implements VideoAdapter.OnVideoClickListener, TimerUpdateListener {
-    // Constants
-    private static final String TAG = "SteamGameActivity";
-    private static final String YOUTUBE_API_KEY = "AIzaSyBJxsSN8930AS9257v8JwTncSjNDXSlotg"; // Your YouTube API key
     private static final String BASE_URL = "https://www.googleapis.com/youtube/v3/";
 
     // UI Components
@@ -92,14 +91,15 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     // Service Management
     public static boolean isActive = false;
     private SteamGameService steamGameService;
+    private ApexLegendsAPIService apexLegendsService;
     private boolean bound = false;
-
+    private boolean apex_bound = false;
     // Broadcast Receivers
     private final BroadcastReceiver steamUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String steamData = intent.getStringExtra("steamData");
-            Log.d(TAG, "Received Steam update: " + steamData);
+            Log.d(SteamConstants.TAG, "Received Steam update: " + steamData);
             // Update the UI with the received data
             if (steamData != null) {
                 //steamDataTextView.setText(steamData);
@@ -120,17 +120,39 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            SteamGameService.LocalBinder binder = (SteamGameService.LocalBinder) service;
-            steamGameService = binder.getService();
-            steamGameService.setTimerCallback(SteamGameActivity.this);
-            bound = true;
+
+            // Handle connection established with the service
+            if (name.getClassName().equals(SteamGameService.class.getName())) {
+                SteamGameService.LocalBinder binder = (SteamGameService.LocalBinder) service;
+                steamGameService = binder.getService();
+                bound = true;
+            } else if (name.getClassName().equals(ApexLegendsAPIService.class.getName())) {
+                ApexLegendsAPIService.LocalBinder apexBinder = (ApexLegendsAPIService.LocalBinder) service;
+                apexLegendsService = apexBinder.getService();
+                apexLegendsService.setTimerCallback(SteamGameActivity.this);
+                apex_bound = true;
+            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             bound = false;
+            apex_bound = false;
         }
     };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        isVideoPaused = false;
+        setContentView(R.layout.activity_steam_game);
+        initializeUIComponents();
+        setupWebView(videoList);
+        createDrawer();
+        Intent intent = getIntent();
+        registerReceivers(intent);
+        updateUIFromIntent(intent);
+    }
 
     @Override
     protected void onStart() {
@@ -144,8 +166,63 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         isActive = false;
     }
     @Override
-    public void onTimerStarted() {
+    public void onTimerStarted(Intent intent, boolean isRanked, boolean isArenas) {
 
+        if(intent.hasExtra("battle_royale_map")){//pull game info for public and ranked
+            if(isRanked){
+                createRankedMapInfo(intent);
+            }else if(isArenas){
+                createArenaMapInfo(intent);
+            }else{
+                createPublicMapInfo(intent);
+            }
+            String posterImageUrl = intent.getStringExtra("battle_royale_asset");//If a map, use the map's image for the background of the activity
+            if (posterImageUrl != null) {
+                ImageView gamePosterImageView = findViewById(R.id.game_poster);
+                Glide.with(this).load(posterImageUrl).into(gamePosterImageView);
+            }
+            //clearGameMapInfo();
+        }
+    }
+
+    @Override
+    public void onPlayerStatsTimerStarted(Intent intent, boolean isRanked) {
+        if(isRanked){
+            createPlayerRankedStats(intent);
+        }
+    }
+
+    private void createPlayerRankedStats(Intent intent) {
+
+        String name = intent.getStringExtra("name");
+        String level = intent.getStringExtra("level");
+        String tag = intent.getStringExtra("tag");
+        String avatar = intent.getStringExtra("avatar");
+        String platform = intent.getStringExtra("platform");
+        String toNextLevelPercent = intent.getStringExtra("toNextLevelPercent");
+
+        String rankScore = intent.getStringExtra("rankScore");
+        String rankName = intent.getStringExtra("rankName");
+        String rankDiv = intent.getStringExtra("rankDiv");
+        String rankImg = intent.getStringExtra("rankImg");
+
+        TextView nameTextView = findViewById(R.id.name);
+        nameTextView.setText(String.format("%s", name));
+
+        TextView rankNameTextView = findViewById(R.id.rankName);
+        rankNameTextView.setText(String.format("%s", rankName));
+
+        TextView rankLevelTextView = findViewById(R.id.level);
+        rankLevelTextView.setText(String.format("Level: %s", level));
+
+        ImageView rankImgImageView = findViewById(R.id.rankImg);
+        if (rankImg != null) {
+            Glide.with(this).load(rankImg).into(rankImgImageView);
+        }
+        ImageView avatarImageView = findViewById(R.id.avatar);
+        if (avatar != null) {
+            Glide.with(this).load(avatar).into(avatarImageView);
+        }
     }
 
     @Override
@@ -164,21 +241,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
 
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        isVideoPaused = false;
-        setContentView(R.layout.activity_steam_game);
-        initializeUIComponents();
-        setupWebView(videoList);
-        createDrawer();
 
-        // Loading indicator for the WebView
-        ProgressBar loadingIndicator = findViewById(R.id.loading_indicator);
-
-        registerReceivers();
-        updateUIFromIntent(getIntent());
-    }
     private void updateUIFromIntent(Intent intent) {
         try {
             updateUIWithGameDetails(intent);
@@ -191,7 +254,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         }
     }
 
-    private void registerReceivers() {
+    private void registerReceivers(Intent intent) {
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 closeNowPlayingReceiver,
                 new IntentFilter(CLOSE_NOW_PLAYING_ACTION)
@@ -202,6 +265,12 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         );
         Intent serviceIntent = new Intent(this, SteamGameService.class);
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+        boolean  isPlayingApexLegends = intent.getBooleanExtra("isPlayingApexLegends", false);
+        if(isPlayingApexLegends){
+            Intent apexLegendsIntent = new Intent(this, ApexLegendsAPIService.class);
+            bindService(apexLegendsIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        }
     }
 
     private void initializeUIComponents() {
@@ -265,7 +334,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         YouTubeApiService apiService = retrofit.create(YouTubeApiService.class);
         Call<YouTubeResponse> call = apiService.getRelatedVideos(
                 gameName,
-                YOUTUBE_API_KEY,
+                MovieConstants.YOUTUBE_API_KEY,
                 "snippet",
                 "video",
                 10
@@ -291,7 +360,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
                     videoList.add(new Video("jL_NPJtEeKY", "Apex Coaching, tips and tricks", "https://img.youtube.com/vi/jL_NPJtEeKY/mqdefault.jpg", "Apex Coaching, tips and tricks \uD83D\uDD34 | !merch !merch !merch", "District"));
                     videoList.add(new Video("-bchB88ZCvM", "ONE OF THE CRAZIEST WINS OF MY APEX CAREER | $400,000 BLGS Highlights", "https://img.youtube.com/vi/-bchB88ZCvM/mqdefault.jpg", "ONE OF THE CRAZIEST WINS OF MY APEX CAREER | $400,000 BLGS Highlights", "ItzTimmy"));
                     videoList.add(new Video("XXXzB2KOjtM", "Spectating Ranked Players: Pro vs Casual Positioning – How to Avoid Common Mistakes in Apex Legends\n", "https://img.youtube.com/vi/XXXzB2KOjtM/mqdefault.jpg", "Spectating Ranked Players: Pro vs Casual Positioning – How to Avoid Common Mistakes in Apex Legends\n", "Dazs"));
-                    Log.e(TAG, "Response error: " + response.message());
+                    Log.e(SteamConstants.TAG, "Response error: " + response.message());
                 }
                 // Notify adapter about data change to update UI
                 videoAdapter.notifyDataSetChanged();
@@ -301,7 +370,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             }
             @Override
             public void onFailure(Call<YouTubeResponse> call, Throwable t) {
-                Log.e(TAG, "API call failed: " + t.getMessage());
+                Log.e(SteamConstants.TAG, "API call failed: " + t.getMessage());
             }
         });
     }
@@ -374,7 +443,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
 
     private int getNextRandomVideoIndex() {
         if (videoList.isEmpty()) {
-           Log.d(TAG, "No videos available.");
+           Log.d(SteamConstants.TAG, "No videos available.");
             return -1; // Indicates no video available
         }
         Random random = new Random();
@@ -386,29 +455,38 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             TextView gameNameTextView = findViewById(R.id.title);
             TextView gameDescriptionTextView = findViewById(R.id.overview);
             ImageView gamePosterImageView = findViewById(R.id.game_poster);
+            TextView steamNameTextView = findViewById(R.id.steam_name);
 
-            String gameName = intent.getStringExtra("game_name");
+
             String releaseDate = intent.getStringExtra("release_date");
             String description = intent.getStringExtra("description");
+
+            String personaName = intent.getStringExtra("personaname");
+            steamNameTextView.setText(personaName);
+
+            ImageView avatarImageView = findViewById(R.id.steam_avatar);
+            String avatarUrl = intent.getStringExtra("avatarfull");
+            if (avatarUrl != null) {
+                Glide.with(this).load(avatarUrl).into(avatarImageView);
+            }
+
+            //String realName = intent.getStringExtra("realname");
             String posterImageUrl =  "";
 
-            SetAchievements(intent);
-            if(intent.hasExtra("battle_royale_map")){//pull game info for public and ranked
-               createMapInfo(intent);
-               posterImageUrl = intent.getStringExtra("battle_royale_asset");//If a map, use the map's image for the background of the activity
-            }else{
-              //  hideGameMapInfo();
-                clearGameMapInfo();
-                posterImageUrl = intent.getStringExtra("poster_image_url");//Otherwise, use the steam game poster for the background
+            if(intent.hasExtra("achievement_names")) {
+                CreateAchievements(intent);
             }
-            final String posterImage = posterImageUrl;
+
+            posterImageUrl = intent.getStringExtra("poster_image_url");//Otherwise, use the steam game poster for the background
             String minimumRequirements = intent.getStringExtra("minimum_requirements");
-            createMinRequirements(minimumRequirements, posterImage);
+            createMinRequirements(minimumRequirements, posterImageUrl);
 
             String maximumRequirements = intent.getStringExtra("recommended_requirements");
-            createMaxRequirements(maximumRequirements, posterImage);
+            createMaxRequirements(maximumRequirements, posterImageUrl);
 
+            String gameName = intent.getStringExtra("game_name");
             gameNameTextView.setText(String.format("%s (%s)", gameName, releaseDate));
+
             gameDescriptionTextView.setText(description);
             if (posterImageUrl != null) {
                 Glide.with(this).load(posterImageUrl).into(gamePosterImageView);
@@ -487,11 +565,16 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         mapEndDateTextView.setText("");
     }
 
-    private void createMapInfo(Intent intent) {
+    private void createPublicMapInfo(Intent intent) {
         createPublicGameMap(intent);
         createPublicNextMap(intent);
+    }
+    private void createRankedMapInfo(Intent intent) {
         createRankedGameMap(intent);
         createRankedNextMap(intent);
+    }
+    private void createArenaMapInfo(Intent intent) {
+
         createArenasGameMap(intent);
         createArenasNextMap(intent);
     }
@@ -633,7 +716,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         textView.setSelected(true); // Important for marquee
     }
 
-    private void SetAchievements(Intent intent) throws JSONException {
+    private void CreateAchievements(Intent intent) throws JSONException {
         LinearLayout achievementsLayout = findViewById(R.id.achievement_menu);
 
         String namesJson = intent.getStringExtra("achievement_names");
@@ -655,7 +738,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             String iconUrl = achievementIcons.getString(i);
             String desc =  achievementDesc.getString(i);
             // Create a horizontal LinearLayout to contain icon and texts
-            LinearLayout achievementCard = CreateAchievementCard(intent, name, status, iconUrl, desc);
+            LinearLayout achievementCard = CreateAchievementViews(intent, name, status, iconUrl, desc);
             // Add the row layout to the main achievements layout
             achievementsLayout.addView(achievementCard);
         }
@@ -688,7 +771,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         return iconImageView;
     }
 
-    private @NonNull LinearLayout CreateAchievementCard(Intent intent, String name, String status, String iconUrl, String desc) {
+    private @NonNull LinearLayout CreateAchievementViews(Intent intent, String name, String status, String iconUrl, String desc) {
 
         LinearLayout achievementCard = createAchievementLayout(intent, name, status, iconUrl, desc);
         // Create ImageView for achievement icon
@@ -751,6 +834,9 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         if (bound) {
             unbindService(serviceConnection);
             bound = false;
+        }
+        if(apex_bound){
+            apex_bound = false;
         }
     }
 

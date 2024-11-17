@@ -1,0 +1,255 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- ImageView for game Poster -->
+    <ImageView
+        android:id="@+id/game_poster"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/game_poster_image_container"
+        android:src="@drawable/cinema"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ProgressBar for Loading State -->
+    <ProgressBar
+        android:id="@+id/game_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="256dp"
+        android:layout_height="256dp"
+        android:indeterminate="false"
+        android:visibility="gone"
+        android:max="100"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- TextView to Show Progress Percentage -->
+    <TextView
+        android:id="@+id/game_progress_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/progress_percentage"
+        android:textColor="@android:color/white"
+        android:background="@color/semi_transparent_black"
+        android:padding="8dp"
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- Top Menu with game Category and Title -->
+    <LinearLayout
+        android:id="@+id/top_menu"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/semi_transparent_black"
+        android:elevation="4dp"
+        android:padding="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <!-- game Category -->
+        <TextView
+            android:id="@+id/game_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/now_playing"
+            android:textColor="@android:color/white"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textAlignment="center"
+            android:textStyle="bold" />
+        <!-- game Title -->
+        <TextView
+            android:id="@+id/game_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/game_title"
+            android:textAlignment="center"
+            android:textColor="@android:color/white"
+            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            android:textStyle="bold" />
+        <!-- Extra game Info -->
+        <LinearLayout
+            android:id="@+id/game_extra"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#00000000"
+            app:layout_constraintTop_toBottomOf="@id/top_menu"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+            <!-- TextView for Popularity -->
+            <TextView
+                android:id="@+id/game_popularity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/popularity"
+                android:textSize="11sp"
+                android:textColor="@android:color/white" />
+            <!-- TextView for Vote Count -->
+            <TextView
+                android:id="@+id/game_vote_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/vote_count"
+                android:textSize="11sp"
+                android:textColor="@android:color/white" />
+            <!-- Ratings -->
+            <TextView
+                android:id="@+id/game_ratings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/adult_status"
+                android:textSize="11sp"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp" />
+            <!-- Studio -->
+            <TextView
+                android:id="@+id/game_studio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tomato_rating"
+                android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp" />
+            <!--tomato rating -->
+            <ImageView
+                android:id="@+id/game_tomato_icon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/fresh_tomato"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@string/tomato_percentage" />
+            <TextView
+                android:id="@+id/game_tomato_percentage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tomato_percentage"
+                android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp" />
+
+            <!-- TextView for Original Language -->
+            <TextView
+                android:id="@+id/game_og_lang"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@string/original_language"
+                android:textSize="11sp"
+                android:textColor="@android:color/white" />
+
+        </LinearLayout>
+        <!-- TextView for Genres -->
+        <TextView
+            android:id="@+id/game_genres"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/genres"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:elevation="1dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/top_menu"
+        >
+        <!-- Buttons for different categories -->
+        <Button
+            android:id="@+id/button_all"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            android:text="@string/all_games"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+        <Button
+            android:id="@+id/button_top_rated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            android:text="@string/top_games"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+        <Button
+            android:id="@+id/button_popular"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            android:text="@string/popular"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+        <Button
+            android:id="@+id/button_trending"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            android:text="@string/trending"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+        <Button
+            android:id="@+id/button_steam"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            android:text="@string/steam"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+        <Button
+            android:id="@+id/button_settings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/button_background"
+            android:text="@string/settings"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/game_overview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:background="@color/semi_transparent_black"
+        android:text="@string/game_overview"
+        android:textColor="@android:color/white"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

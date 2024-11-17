@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.anthonybturner.cinemapostersanywhere"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.anthonybturner.cinemapostersanywhere"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
         vectorDrawables {

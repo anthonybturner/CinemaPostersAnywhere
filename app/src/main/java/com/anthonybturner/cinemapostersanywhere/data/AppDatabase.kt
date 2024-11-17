@@ -12,7 +12,6 @@ import com.anthonybturner.cinemapostersanywhere.utilities.Converters
 @TypeConverters(Converters::class)  // Correct syntax for Kotlin
 abstract class AppDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
-
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null

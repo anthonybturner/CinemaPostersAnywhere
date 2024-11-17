@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
+import com.anthonybturner.cinemapostersanywhere.utilities.SteamConstants;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -94,13 +95,12 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... params) {
             String steamName = params[0];
-            String apiUrl = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=" + SteamGameService.STEAM_API_KEY + "&vanityurl=" + steamName;
+            String apiUrl = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=" + SteamConstants.STEAM_API_KEY + "&vanityurl=" + steamName;
 
             try {
                 URL url = new URL(apiUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
-
                 // Handle response code here if needed
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     Log.e("FetchSteamIDTask", "Failed to fetch data: " + connection.getResponseCode());

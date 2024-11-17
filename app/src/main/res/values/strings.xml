@@ -48,4 +48,10 @@
     <string name="map_end_date">2024-10-28 02:00:00</string>
     <string name="map_start_date">2024-10-28 02:00:00</string>
     <string name="next_map_name">Olympus</string>
+    <string name="app_overview">CinemaPostersAnywhere, movies and games on your mobile and streaming tv devices. Displays slideshow and related information dynamically, providing you with an engaging way to explore films and related content. To get started, click on the media type button above</string>
+    <string name="all_games">All Games</string>
+    <string name="top_games">Top Games</string>
+    <string name="CinemaPostersAnywhere">CinemaPostersAnywhere</string>
+    <string name="cinema">Cinema</string>
+    <string name="games">Games</string>
 </resources>

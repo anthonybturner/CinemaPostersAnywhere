@@ -1,24 +1,20 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.MOVIE_UPDATED_INTENT_ACTION;
-import static com.anthonybturner.cinemapostersanywhere.utilities.Constants.NOW_PLAYING_INTENT_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.MOVIE_UPDATED_INTENT_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.PLEX_MOVIE_PLAYING_INTENT_ACTION;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.anthonybturner.cinemapostersanywhere.Models.ActorInfo;
 import com.anthonybturner.cinemapostersanywhere.utilities.TMDBUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
 
 public class NowPlayingWebSocketListener {
     private final Context context;
@@ -64,7 +60,9 @@ public class NowPlayingWebSocketListener {
                 TMDBUtils.fetchPosterUrlFromTMDB(context, tmdbId, posterUrl -> {
                     if (posterUrl != null) {
                         String eventType = payloadObject.optString("event", "");
-                        Intent intent = new Intent(NOW_PLAYING_INTENT_ACTION);
+                        Intent intent = new Intent(PLEX_MOVIE_PLAYING_INTENT_ACTION);
+                        intent.putExtra("type", "plex");
+                        intent.putExtra("id", -1);
                         intent.putExtra("title", title);
                         intent.putExtra("overview", overview);
                         intent.putExtra("contentRating", contentRating);

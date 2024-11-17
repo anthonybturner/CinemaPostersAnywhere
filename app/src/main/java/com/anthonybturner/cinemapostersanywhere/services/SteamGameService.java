@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Binder;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Build;
@@ -28,37 +27,28 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.anthonybturner.cinemapostersanywhere.MainActivity;
+import com.anthonybturner.cinemapostersanywhere.MovieActivity;
 import com.anthonybturner.cinemapostersanywhere.SteamGameActivity;
-import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
 import com.anthonybturner.cinemapostersanywhere.R;
+import com.anthonybturner.cinemapostersanywhere.utilities.SteamConstants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class SteamGameService extends Service {
     private static final String TAG = "SteamGameService";
-    public static final String STEAM_API_KEY = "2340AF30162B10A27AA52B1E3002275D";
-    private static final String APEX_API_KEY = "e95f0a39efc186fe2aaa0e4d19f2b65c";
-    private static final String STEAM_ID = "76561198060588435";
     private static final long UPDATE_INTERVAL = 30000; // 30 seconds
-    public static final String NO_GAME_CURRENTLY_BEING_PLAYED = "No game currently being played.";
     public static final String TIMER_UPDATE_ACTION = "com.anthonybturner.cinemapostersanywhere.TIMER_UPDATE";
 
     private Handler handler;
     private Runnable runnable;
     private RequestQueue requestQueue;
-    private CountDownTimer mapCountDownTimer, rankedMapCountDownTimer, arenasMapCountDownTimer;
     private static String steamID;
-    private List<TimerUpdateListener> listenersList;
-    private TimerUpdateListener timerUpdateListener;
 
     private final IBinder binder = new LocalBinder();
 
@@ -73,10 +63,6 @@ public class SteamGameService extends Service {
         return binder;
     }
 
-    public void setTimerCallback(TimerUpdateListener callback) {
-        listenersList.add(callback);
-        //this.timerUpdateListener = callback;
-    }
 
     public static void setSteamId(String newSteamId) {
         steamID = newSteamId;
@@ -93,7 +79,6 @@ public class SteamGameService extends Service {
         super.onCreate();
         handler = new Handler();
         requestQueue = Volley.newRequestQueue(this);
-        listenersList = new ArrayList<TimerUpdateListener>();
         createNotificationChannel();
         monitorActiveGameStatus();
     }
@@ -115,7 +100,7 @@ public class SteamGameService extends Service {
             // Permission is not granted; don't post the notification
             return;
         }
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, MovieActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
@@ -151,98 +136,18 @@ public class SteamGameService extends Service {
         };
         handler.post(runnable);
     }
-    public void startPublicMapTimer(long intervalInMillis) {
-        for(TimerUpdateListener listener : listenersList){
-            if (listener != null) {
-                listener.onTimerStarted();
-            }
-        }
-         mapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1 second interval
-            @Override
-            public void onTick(long millisUntilFinished) {
-                for(TimerUpdateListener listener : listenersList){
-                    if (listener != null) {
-                        listener.onTimerUpdate(millisUntilFinished, false, false);
-                    }
-                }
-            }
-            @Override
-            public void onFinish() {
-                for(TimerUpdateListener listener : listenersList){
-                    if (listener != null) {
-                        listener.onTimerFinish(false);
-                    }
-                }
-                checkCurrentGame(true); // Call your API method here
-            }
-        }.start();
-    }
 
-    private void startArenasMapTimer(long intervalInMillis) {
-        // Cancel any existing ranked timer to avoid overlapping
-        if (arenasMapCountDownTimer != null) {
-            arenasMapCountDownTimer.cancel();
-        }
-        // Initialize the ranked timer
-        arenasMapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1-second interval
-            @Override
-            public void onTick(long millisUntilFinished) {
-                for (TimerUpdateListener listener : listenersList) {
-                    if (listener != null) {
-                        listener.onTimerUpdate(millisUntilFinished, false, true);
-                    }
-                }
-            }
-            @Override
-            public void onFinish() {
-                for (TimerUpdateListener listener : listenersList) {
-                    if (listener != null) {
-                        listener.onTimerFinish(true);
-                    }
-                }
-                // Call your API method here for ranked games
-                checkCurrentGame(true); // Indicate ranked game by using a parameter if necessary
-            }
-        }.start();
-    }
-    public void startRankedMapTimer(long intervalInMillis) {
-        // Cancel any existing ranked timer to avoid overlapping
-        if (rankedMapCountDownTimer != null) {
-            rankedMapCountDownTimer.cancel();
-        }
-        // Initialize the ranked timer
-        rankedMapCountDownTimer = new CountDownTimer(intervalInMillis, 1000) { // 1-second interval
-            @Override
-            public void onTick(long millisUntilFinished) {
-                for (TimerUpdateListener listener : listenersList) {
-                    if (listener != null) {
-                        listener.onTimerUpdate(millisUntilFinished, true, false);
-                    }
-                }
-            }
-            @Override
-            public void onFinish() {
-                for (TimerUpdateListener listener : listenersList) {
-                    if (listener != null) {
-                        listener.onTimerFinish(true);
-                    }
-                }
-                // Call your API method here for ranked games
-                checkCurrentGame(true); // Indicate ranked game by using a parameter if necessary
-            }
-        }.start();
-    }
 
-    public void stopMapTimer(){
-        mapCountDownTimer.cancel();
-    }
     public void checkCurrentGame(){
         checkCurrentGame(false);
     }
 
+    private boolean isPlayingApexLegends(String gameId){
+        return gameId.equals("1172470");//Apex legend game id, todo: Create constant.
+    }
     public void checkCurrentGame(boolean isMapOver) {
-        String url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=" + STEAM_API_KEY + "&steamids=" + getSteamId();
-        Intent intent = new Intent(MainActivity.STEAM_GAME_PLAYING_ACTION);
+        String url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=" + SteamConstants.STEAM_API_KEY + "&steamids=" + getSteamId();
+        Intent intent = new Intent(SteamConstants.STEAM_GAME_PLAYING_ACTION);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -252,26 +157,23 @@ public class SteamGameService extends Service {
                             if (players.length() > 0) {
                                 JSONObject player = players.getJSONObject(0);
                                 if (player.has("gameid")) {//Is playing steam game
-
                                     String gameId = player.getString("gameid");
-                                    if (!MainActivity.isSameGameDisplayed((gameId)) || isMapOver) {//Ensure the same game is not currently running
+                                    if (!MovieActivity.isSameGameDisplayed((gameId)) || isMapOver) {//Ensure the same game is not currently running
                                         //TODO: save gameId to database table(eg.Games), and fetch gameId from database on upcoming calls to reduce api request calls.
                                         // Initialize CountDownLatch to wait for both async operations
-                                        CountDownLatch latch = null;
-                                        if (gameId.equals("1172470")) {
-                                            latch = new CountDownLatch(5);
-                                            fetchApexLegendsPubsMapRotations(intent, latch);
-                                            fetchApexLegendsRankedMapRotations(intent, latch);
-                                        }else{
-                                            latch = new CountDownLatch(3);
-                                        }
+                                        intent.putExtra("gameId", player.getString("gameid"));
+                                        intent.putExtra("personaname", player.getString("personaname"));
+                                        intent.putExtra("avatarfull", player.getString("avatarfull"));
+                                        intent.putExtra("realname", player.getString("realname"));
+                                        intent.putExtra("isPlayingApexLegends", isPlayingApexLegends(gameId));
+
+                                        CountDownLatch latch = new CountDownLatch(3);
                                         fetchGameDetails(gameId, intent, latch);
                                         fetchGameStatsAndAchievements(gameId, intent, latch);
                                         // Wait for both tasks to finish
-                                        CountDownLatch finalLatch = latch;
                                         new Thread(() -> {
                                             try {
-                                                finalLatch.await();
+                                                latch.await();
                                                 // Broadcast after both async calls complete
                                                 LocalBroadcastManager.getInstance(SteamGameService.this).sendBroadcast(intent);
                                                 sendTimerFinishedNotification(intent);
@@ -286,7 +188,7 @@ public class SteamGameService extends Service {
                                         // SteamGameActivity is currently active
                                         stopShowingGameInfo();
                                     }
-                                    Log.d(TAG, NO_GAME_CURRENTLY_BEING_PLAYED);
+                                    Log.d(TAG, SteamConstants.NO_GAME_CURRENTLY_BEING_PLAYED);
                                 }
                             }
                         } catch (JSONException e) {
@@ -303,178 +205,9 @@ public class SteamGameService extends Service {
         requestQueue.add(jsonObjectRequest);
     }
 
-    private void fetchApexLegendsPubsMapRotations(Intent intent, CountDownLatch latch) {
-        String url = String.format("https://api.mozambiquehe.re/maprotation?auth=%s",  APEX_API_KEY);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            // For Public Maps
-                            parseMapRotation(response, intent,
-                                    null, "current", "next",
-                                    "battle_royale_map", "battle_royale_asset", "battle_royale_remainingSecs",
-                                    "next_battle_royale_map", "next_battle_royale_readableDate_start",
-                                    "battle_royale_next_readableDate_end", "battle_royale_next_DurationInMinutes",
-                                    false, false );
-                        } finally {
-                            latch.countDown();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "Error fetching Apex Legends map rotation data: " + error.getMessage());
-                        latch.countDown();
-                    }
-                });
-        requestQueue.add(jsonObjectRequest);
-    }
-
-    private void fetchApexLegendsRankedMapRotations(Intent intent, CountDownLatch latch) {
-        String url = String.format("https://api.mozambiquehe.re/maprotation?auth=%s&version=%s",  APEX_API_KEY, "2");
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            // For Ranked Maps
-                            parseMapRotation(response, intent,
-                                    "ranked", "current", "next",
-                                    "ranked_map", "ranked_asset", "ranked_remainingSecs",
-                                    "next_ranked_map", "next_ranked_readableDate_start",
-                                    "next_ranked_readableDate_end", "next_ranked_DurationInMinutes",
-                                    true, false);
-                            // For Arenas Maps
-                            parseMapRotation(response, intent,
-                                    "ltm", "current", "next",
-                                    "arenas_map", "arenas_asset", "arenas_remainingSecs",
-                                    "next_arenas_map", "next_arenas_readableDate_start",
-                                    "next_arenas_readableDate_end", "next_arenas_DurationInMinutes",
-                                    false, true);
-                        } finally {
-                            latch.countDown();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "Error fetching Apex Legends map rotation data: " + error.getMessage());
-                        latch.countDown();
-                    }
-                });
-        requestQueue.add(jsonObjectRequest);
-    }
-    public void parsePublicMapRotation(JSONObject response, Intent intent) {
-        try {
-            //Get pubs
-            // Parse current map rotation data
-            JSONObject currentMode = response.getJSONObject("battle_royale");
-            JSONObject currentMap = currentMode.getJSONObject("current");
-            extractMapData(currentMap, intent, "battle_royale_map", "battle_royale_asset", "battle_royale_remainingSecs");
-            long milliSeconds = currentMap.getLong("remainingSecs") * 1000;
-            startPublicMapTimer(milliSeconds);
-            // Parse next map rotation data
-            JSONObject nextMap = currentMode.getJSONObject("next");
-            extractMapData(nextMap, intent, "next_battle_royale_map", "next_battle_royale_readableDate_start", "battle_royale_next_readableDate_end", "battle_royale_next_DurationInMinutes");
-        } catch (Exception e) {
-            Log.e(TAG, "Error fetching achievements: " + e.getMessage());
-        }
-    }
-    public void parseMapRotation(JSONObject response, Intent intent, String modeKey, String currentMapKey, String nextMapKey,
-                                 String mapNameKey, String assetKey, String remainingSecsKey,
-                                 String nextMapNameKey, String nextStartKey, String nextEndKey,
-                                 String nextDurationKey, boolean isRanked, boolean isArenas) {
-        try {
-            JSONObject currentMap = null;
-            JSONObject nextMap = null;
-            // Get the current mode (public or ranked)
-            if( modeKey == null){
-                currentMap = response.getJSONObject(currentMapKey);
-                nextMap = response.getJSONObject(nextMapKey);
-            }else{
-                JSONObject currentMode = response.getJSONObject(modeKey);
-                currentMap = currentMode.getJSONObject(currentMapKey);
-                nextMap = currentMode.getJSONObject(nextMapKey);
-            }
-            // Parse current map rotation data
-            extractMapData(currentMap, intent, mapNameKey, assetKey, remainingSecsKey);
-
-            // Set timer for either ranked or public
-            long milliSeconds = currentMap.getLong("remainingSecs") * 1000;
-            if (isRanked) {
-                startRankedMapTimer(milliSeconds);
-            }else if(isArenas){
-                startArenasMapTimer(milliSeconds);
-            } else {
-                startPublicMapTimer(milliSeconds);
-            }
-            // Parse next map rotation data
-            extractMapData(nextMap, intent, nextMapNameKey, nextStartKey, nextEndKey, nextDurationKey);
-        } catch (Exception e) {
-            Log.e(TAG, "Error fetching map rotation data: " + e.getMessage());
-        }
-    }
-
-
-    public void parseRankedMapRotation(JSONObject response, Intent intent) {
-        try {
-            //Get ranked map rotation data
-            JSONObject currentMode = response.getJSONObject("ranked");
-            JSONObject currentMap = currentMode.getJSONObject("current");
-            extractMapData(currentMap, intent, "ranked_map", "ranked_asset", "ranked_remainingSecs");
-            // Parse next map rotation data
-            JSONObject nextMap = currentMode.getJSONObject("next");
-            extractMapData(nextMap, intent, "next_ranked_map", "next_ranked_readableDate_start", "next_ranked_readableDate_end", "next_ranked_DurationInMinutes");
-            long milliSeconds = currentMap.getLong("remainingSecs") * 1000;
-            startRankedMapTimer(milliSeconds);
-        } catch (Exception e) {
-            Log.e(TAG, "Error fetching achievements: " + e.getMessage());
-        }
-    }
-    private void extractMapData(JSONObject mapData, Intent intent, String mapKey, String assetKey, String remainingSecsKey) {
-        try {
-            String map = mapData.getString("map");
-            String asset = mapData.getString("asset");
-
-            // Put extracted data into intent
-            intent.putExtra(mapKey, map);
-            intent.putExtra(assetKey, asset);
-            // Check if remainingSecsKey is present
-            if (mapData.has("remainingSecs")) {
-                long remainingSecs = mapData.getLong("remainingSecs");
-                intent.putExtra(remainingSecsKey, remainingSecs);
-            } else {
-                intent.putExtra(remainingSecsKey, 0); // Default value if not present
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error extracting map data: " + e.getMessage());
-        }
-    }
-
-    private void extractMapData(JSONObject mapData, Intent intent, String mapKey, String readableDateStartKey, String readableDateEndKey, String durationMinutesKey) {
-        try {
-            String map = mapData.getString("map");
-            String readableDateStart = mapData.getString("readableDate_start");
-            String readableDateEnd = mapData.getString("readableDate_end");
-            String durationMinutes = mapData.getString("DurationInMinutes");
-
-            // Put extracted data into intent
-            intent.putExtra(mapKey, map);
-            intent.putExtra(readableDateStartKey, readableDateStart);
-            intent.putExtra(readableDateEndKey, readableDateEnd);
-            intent.putExtra(durationMinutesKey, durationMinutes);
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error extracting next map data: " + e.getMessage());
-        }
-    }
-
 
     private void stopShowingGameInfo() {
-        Intent intent = new Intent(MainActivity.STEAM_GAME_PLAYING_ACTION);
+        Intent intent = new Intent(SteamConstants.STEAM_GAME_PLAYING_ACTION);
         // Send broadcast to update the UI
         intent.putExtra("game_id", ""); // Include the game ID
         intent.putExtra("game_status", "failed"); // Include the game ID
@@ -482,7 +215,7 @@ public class SteamGameService extends Service {
     }
     private void fetchGameStatsAndAchievements(String gameId, Intent intent, CountDownLatch latch) {
         // API to fetch user stats and achievements for a particular game
-        String url = "https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=" + STEAM_API_KEY + "&steamid=" + STEAM_ID + "&appid=" + gameId;
+        String url = "https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=" + SteamConstants.STEAM_API_KEY + "&steamid=" + steamID + "&appid=" + gameId;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -503,6 +236,8 @@ public class SteamGameService extends Service {
                                 }
                                 // Fetch achievement details including icons
                                 fetchAchievementSchema(gameId, userAchievements, intent, latch);
+                            }else{
+                                latch.countDown();//Countdown for fetchAchievementSchema
                             }
                         } catch (JSONException e) {
                             Log.e(TAG, "Error fetching achievements: " + e.getMessage());
@@ -524,7 +259,7 @@ public class SteamGameService extends Service {
 
     private void fetchAchievementSchema(String gameId, Map<String, Boolean> userAchievements, Intent intent, CountDownLatch latch) {
         // Fetch achievement schema to get icons
-        String url = "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=" + STEAM_API_KEY + "&appid=" + gameId;
+        String url = "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=" + SteamConstants.STEAM_API_KEY + "&appid=" + gameId;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -593,7 +328,7 @@ public class SteamGameService extends Service {
 
     private void fetchGlobalAchievementPercentages(String gameId, Map<String, Boolean> userAchievements, Intent intent, CountDownLatch latch) {
         // Fetch global achievement percentages
-        String url = "https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?key=" + STEAM_API_KEY + "&gameid=" + gameId;
+        String url = "https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?key=" + SteamConstants.STEAM_API_KEY + "&gameid=" + gameId;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -646,7 +381,7 @@ public class SteamGameService extends Service {
     }
 
     private void fetchGameDetails(String gameId, Intent intent, CountDownLatch latch) {
-        String url = "https://store.steampowered.com/api/appdetails?appids=" + gameId;
+        String url = String.format("https://store.steampowered.com/api/appdetails?appids=%s&l=english", gameId);
         Context context = this;
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {

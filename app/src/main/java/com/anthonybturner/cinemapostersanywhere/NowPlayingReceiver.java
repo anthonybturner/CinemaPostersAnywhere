@@ -7,18 +7,17 @@ import android.content.Intent;
 import java.util.Objects;
 
 public class NowPlayingReceiver extends BroadcastReceiver {
-    private final MainActivity mainActivity;
-    
-    public NowPlayingReceiver(MainActivity activity) {
-        this.mainActivity = activity;
+    private final MovieActivity movieActivity;
+    public NowPlayingReceiver(MovieActivity activity) {
+        this.movieActivity = activity;
     }
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getStringExtra("action");
         if (Objects.equals(action, "now_playing")) {
-            mainActivity.showNowPlaying(intent);
+            movieActivity.showNowPlaying(intent);
         } else if (Objects.equals(action, "resume_slideshow")) {
-            mainActivity.startSlideshow();
+            movieActivity.startSlideshow();
         }
     }
 }
