@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity  {
     }
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // Handle action bar item clicks
         if (drawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
