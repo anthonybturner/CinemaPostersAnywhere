@@ -1,7 +1,7 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.CLOSE_NOW_PLAYING_ACTION;
-import static com.anthonybturner.cinemapostersanywhere.utilities.ApexLegendsAPIConstants.APEX_LEGENDS_API_UPDATE_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.CLOSE_NOW_PLAYING_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.ApexLegendsAPIConstants.APEX_LEGENDS_API_UPDATE_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.utilities.Converters.CalculateTime;
 
 import android.annotation.SuppressLint;
@@ -43,8 +43,8 @@ import com.anthonybturner.cinemapostersanywhere.interfaces.YouTubeApiService;
 import com.anthonybturner.cinemapostersanywhere.services.ApexLegendsAPIService;
 import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
-import com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants;
-import com.anthonybturner.cinemapostersanywhere.utilities.SteamConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.Steam;
 import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
@@ -99,7 +99,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
         @Override
         public void onReceive(Context context, Intent intent) {
             String steamData = intent.getStringExtra("steamData");
-            Log.d(SteamConstants.TAG, "Received Steam update: " + steamData);
+            Log.d(Steam.TAG, "Received Steam update: " + steamData);
             // Update the UI with the received data
             if (steamData != null) {
                 //steamDataTextView.setText(steamData);
@@ -360,7 +360,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
                     videoList.add(new Video("jL_NPJtEeKY", "Apex Coaching, tips and tricks", "https://img.youtube.com/vi/jL_NPJtEeKY/mqdefault.jpg", "Apex Coaching, tips and tricks \uD83D\uDD34 | !merch !merch !merch", "District"));
                     videoList.add(new Video("-bchB88ZCvM", "ONE OF THE CRAZIEST WINS OF MY APEX CAREER | $400,000 BLGS Highlights", "https://img.youtube.com/vi/-bchB88ZCvM/mqdefault.jpg", "ONE OF THE CRAZIEST WINS OF MY APEX CAREER | $400,000 BLGS Highlights", "ItzTimmy"));
                     videoList.add(new Video("XXXzB2KOjtM", "Spectating Ranked Players: Pro vs Casual Positioning – How to Avoid Common Mistakes in Apex Legends\n", "https://img.youtube.com/vi/XXXzB2KOjtM/mqdefault.jpg", "Spectating Ranked Players: Pro vs Casual Positioning – How to Avoid Common Mistakes in Apex Legends\n", "Dazs"));
-                    Log.e(SteamConstants.TAG, "Response error: " + response.message());
+                    Log.e(Steam.TAG, "Response error: " + response.message());
                 }
                 // Notify adapter about data change to update UI
                 videoAdapter.notifyDataSetChanged();
@@ -370,7 +370,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
             }
             @Override
             public void onFailure(Call<YouTubeResponse> call, Throwable t) {
-                Log.e(SteamConstants.TAG, "API call failed: " + t.getMessage());
+                Log.e(Steam.TAG, "API call failed: " + t.getMessage());
             }
         });
     }
@@ -443,7 +443,7 @@ public class SteamGameActivity extends AppCompatActivity implements VideoAdapter
 
     private int getNextRandomVideoIndex() {
         if (videoList.isEmpty()) {
-           Log.d(SteamConstants.TAG, "No videos available.");
+           Log.d(Steam.TAG, "No videos available.");
             return -1; // Indicates no video available
         }
         Random random = new Random();

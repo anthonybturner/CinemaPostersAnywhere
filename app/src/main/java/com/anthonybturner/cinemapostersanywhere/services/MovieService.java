@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.CountDownTimer;
@@ -26,11 +27,12 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.anthonybturner.cinemapostersanywhere.Constants.SharedPrefsConstants;
 import com.anthonybturner.cinemapostersanywhere.MovieActivity;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
 import com.anthonybturner.cinemapostersanywhere.R;
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
-import com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants;
 import com.anthonybturner.cinemapostersanywhere.utilities.TMDBUtils;
 
 import org.json.JSONArray;
@@ -44,11 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MovieService extends Service {
     private static final String TAG = "MovieService";
-    public static final String STEAM_API_KEY = "2340AF30162B10A27AA52B1E3002275D";
-    private static final String APEX_API_KEY = "e95f0a39efc186fe2aaa0e4d19f2b65c";
     private static final long UPDATE_INTERVAL = 30000; // 30 seconds
-    public static final String NO_GAME_CURRENTLY_BEING_PLAYED = "No game currently being played.";
-    public static final String TIMER_UPDATE_ACTION = "com.anthonybturner.cinemapostersanywhere.TIMER_UPDATE";
 
     private Handler handler;
     private Runnable runnable;
@@ -137,10 +135,14 @@ public class MovieService extends Service {
         handler.post(runnable);
     }
     public void checkCurrentMovie() {
-        String url = "http://192.168.1.171:8080/jsonrpc";
+        SharedPreferences sharedPreferences = getSharedPreferences(SharedPrefsConstants.PREFS_KEY_APP_PREFERENCES, MODE_PRIVATE);
+        String ip = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_IP_ADDRESS, SharedPrefsConstants.PREF_VALUE_DEFAULT_KODI_IP_ADDRESS);
+        String port = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_PORT, SharedPrefsConstants.PREF_VALUE_DEFAULT_KODI_PORT);
+        String kodiUrl = String.format("http://%s:%s/jsonrpc", ip, port);
+        //String url = "http://192.168.1.171:8080/jsonrpc";
         try {
             JSONObject jsonRequest = createGetItemRequestParams(); // Create the JSON-RPC payload
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonRequest,
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, kodiUrl, jsonRequest,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {

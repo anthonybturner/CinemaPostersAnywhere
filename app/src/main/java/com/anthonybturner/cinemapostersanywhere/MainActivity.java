@@ -63,8 +63,6 @@ public class MainActivity extends AppCompatActivity  {
 
     private void initializeViews() {
 
-       // progressBar = findViewById(R.id.movie_progress_bar);
-       // progressText = findViewById(R.id.movie_progress_text);
     }
 
     private void initializeWakeLock() {

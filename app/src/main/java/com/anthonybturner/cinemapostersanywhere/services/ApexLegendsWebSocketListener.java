@@ -1,6 +1,6 @@
 package com.anthonybturner.cinemapostersanywhere.services;
 
-import static com.anthonybturner.cinemapostersanywhere.utilities.ApexLegendsAPIConstants.APEX_LEGENDS_API_UPDATE_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.ApexLegendsAPIConstants.APEX_LEGENDS_API_UPDATE_ACTION;
 
 import android.content.Intent;
 import android.util.Log;

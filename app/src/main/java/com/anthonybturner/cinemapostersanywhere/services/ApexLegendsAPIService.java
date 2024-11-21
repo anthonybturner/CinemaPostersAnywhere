@@ -20,7 +20,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
-import com.anthonybturner.cinemapostersanywhere.utilities.ApexLegendsAPIConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.ApexLegendsAPIConstants;
 
 import java.util.ArrayList;
 

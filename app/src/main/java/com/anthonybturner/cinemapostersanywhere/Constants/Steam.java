@@ -1,6 +1,6 @@
-package com.anthonybturner.cinemapostersanywhere.utilities;
+package com.anthonybturner.cinemapostersanywhere.Constants;
 
-public class SteamConstants {
+public class Steam {
     public static final String STEAM_GAME_PLAYING_ACTION = "STEAM_GAME_UPDATE";
     public final static String Game_UPDATED_INTENT_ACTION = "com.anthonybturner.cinemapostersanywhere.GAME_UPDATED_INTENT_ACTION";
     // Constants

@@ -1,4 +1,4 @@
-package com.anthonybturner.cinemapostersanywhere.utilities;
+package com.anthonybturner.cinemapostersanywhere.Constants;
 
 public class ApexLegendsAPIConstants {
     public static final String APEX_LEGENDS_API_UPDATE_ACTION = "com.anthonybturner.cinemapostersanywhere.STEAM_UPDATE";

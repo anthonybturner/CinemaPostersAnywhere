@@ -54,4 +54,8 @@
     <string name="CinemaPostersAnywhere">CinemaPostersAnywhere</string>
     <string name="cinema">Cinema</string>
     <string name="games">Games</string>
+    <string name="enter_ip_address">Enter IP address</string>
+    <string name="enter_port">Enter port</string>
+    <string name="enter_steam_user_name">Enter Steam Name</string>
+    <string name="steam_id_will_appear_here">Steam ID will appear here</string>
 </resources>

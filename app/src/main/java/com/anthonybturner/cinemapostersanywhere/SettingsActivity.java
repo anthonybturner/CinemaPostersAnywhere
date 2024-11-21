@@ -12,7 +12,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
-import com.anthonybturner.cinemapostersanywhere.utilities.SteamConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.Steam;
+import com.anthonybturner.cinemapostersanywhere.Constants.SharedPrefsConstants;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -22,11 +23,10 @@ import java.net.URL;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    private EditText kodiIpText, kodiPortText;
     private EditText steamNameEditText;
-    private Button saveButton;
     private SharedPreferences sharedPreferences;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
-    private static final String STEAM_NAME_KEY = "steam_name";
     private TextView steamIdTextView;
 
     @Override
@@ -35,15 +35,19 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         steamNameEditText = findViewById(R.id.steamNameEditText);
-        saveButton = findViewById(R.id.saveButton);
         steamIdTextView = findViewById(R.id.steamId); // Assuming you have a TextView for Steam ID
-        sharedPreferences = getSharedPreferences("AppPreferences", MODE_PRIVATE);
+
+
+        kodiIpText = findViewById(R.id.kodiIpAddress);
+        kodiPortText = findViewById(R.id.kodiPortAddress);
+
+        Button saveButton = findViewById(R.id.saveButton);
+        sharedPreferences = getSharedPreferences(SharedPrefsConstants.PREFS_KEY_APP_PREFERENCES, MODE_PRIVATE);
         // Initialize the listener
         preferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if (key.equals("steam_id")) {
-                    // Handle the change
+                if (key.equals(SharedPrefsConstants.PREFS_KEY_STEAM_ID)) {
                     String newSteamID = sharedPreferences.getString(key, null);
                     Log.d("SettingsActivity", "New Steam ID: " + newSteamID);
                     // Update UI or perform any action needed
@@ -51,51 +55,68 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             }
         };
-        loadSteamName();
-        loadSteamID(); // Load Steam ID when activity starts
+        loadSteamPrefs();
+        loadKodiPrefs();
 
         saveButton.setOnClickListener(v -> {
-            String steamName = steamNameEditText.getText().toString();
-            if (!steamName.isEmpty()) {
-                saveSteamName(steamName);
-                fetchSteamID(steamName);
-            } else {
-                Toast.makeText(SettingsActivity.this, "Please enter a Steam name", Toast.LENGTH_SHORT).show();
-            }
+               saveSteamPrefs();
+               saveKodiPrefs();
         });
     }
-    private void loadSteamName() {
+
+    private void loadKodiPrefs() {
         // Retrieve the saved Steam name
-        String savedSteamName = sharedPreferences.getString(STEAM_NAME_KEY, null);
-        if (savedSteamName != null) {
-            steamNameEditText.setText(savedSteamName); // Set the EditText to the saved Steam name
+        String prefValue = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_IP_ADDRESS, null);
+        if (prefValue != null) {
+            kodiIpText.setText(prefValue); // Set the EditText to the saved Steam name
+        }
+        prefValue = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_PORT, null);
+        if (prefValue != null) {
+            kodiPortText.setText(prefValue); // Set the EditText to the saved Steam name
         }
     }
-
-    private void saveSteamName(String steamName) {
-        // Save the Steam name in SharedPreferences
-        sharedPreferences.edit().putString(STEAM_NAME_KEY, steamName).apply();
-        Toast.makeText(this, "Steam name saved successfully", Toast.LENGTH_SHORT).show();
+    private void saveKodiPrefs() {
+        String ip = kodiIpText.getText().toString();
+        String port = kodiPortText.getText().toString();
+        sharedPreferences.edit().putString(SharedPrefsConstants.PREF_KEY_KODI_IP_ADDRESS, ip).apply();
+        sharedPreferences.edit().putString(SharedPrefsConstants.PREF_KEY_KODI_PORT, port).apply();
+        Toast.makeText(this, "Kodi settings saved successfully", Toast.LENGTH_SHORT).show();
     }
 
-    private void loadSteamID() {
+    private void loadSteamPrefs(){
+        // Retrieve the saved Steam name
+        String prefValue = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_STEAM_NAME_KEY, null);
+        if (prefValue != null) {
+            steamNameEditText.setText(prefValue); // Set the EditText to the saved Steam name
+        }
         // Retrieve the saved Steam ID
-        String steamID = sharedPreferences.getString("steam_id", null);
-        if (steamID != null) {
-            steamIdTextView.setText(steamID); // Update the UI to show the Steam ID
+        prefValue = sharedPreferences.getString(SharedPrefsConstants.PREFS_KEY_STEAM_ID, null);
+        if (prefValue != null) {
+            steamIdTextView.setText(prefValue); // Update the UI to show the Steam ID
         }
     }
 
-    private void fetchSteamID(String steamName) {
-        new FetchSteamIDTask().execute(steamName);
+    private void saveSteamPrefs() {
+        String prefValue = steamNameEditText.getText().toString();
+        if(prefValue.isEmpty()){
+            Toast.makeText(SettingsActivity.this, "Please enter a Steam name", Toast.LENGTH_SHORT).show();
+        }else{
+            // Save the Steam name in SharedPreferences
+            sharedPreferences.edit().putString(SharedPrefsConstants.PREF_KEY_STEAM_NAME_KEY, prefValue).apply();
+            Toast.makeText(this, "Steam name saved successfully", Toast.LENGTH_SHORT).show();
+            fetchSteamID(prefValue);//Goto the steam api to get the steam name's steam id.
+        }
+    }
+
+    private void fetchSteamID(String prefValue) {
+        new FetchSteamIDTask().execute(prefValue);
     }
 
     private class FetchSteamIDTask extends AsyncTask<String, Void, String> {
-
         @Override
         protected String doInBackground(String... params) {
             String steamName = params[0];
-            String apiUrl = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=" + SteamConstants.STEAM_API_KEY + "&vanityurl=" + steamName;
+            String apiUrl = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=" + Steam.STEAM_API_KEY + "&vanityurl=" + steamName;
 
             try {
                 URL url = new URL(apiUrl);
@@ -133,7 +154,7 @@ public class SettingsActivity extends AppCompatActivity {
         protected void onPostExecute(String steamID) {
             if (steamID != null) {
                 // Save the Steam ID in SharedPreferences
-                sharedPreferences.edit().putString("steam_id", steamID).apply();
+                sharedPreferences.edit().putString(SharedPrefsConstants.PREFS_KEY_STEAM_ID, steamID).apply();
                 steamIdTextView.setText(steamID); // Update the UI immediately
                 Toast.makeText(SettingsActivity.this, "Steam ID saved successfully", Toast.LENGTH_SHORT).show();
             } else {

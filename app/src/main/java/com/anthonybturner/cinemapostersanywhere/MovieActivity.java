@@ -1,5 +1,8 @@
 package com.anthonybturner.cinemapostersanywhere;
 
+import static androidx.databinding.DataBindingUtil.setContentView;
+
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.MOVIE_UPDATED_INTENT_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_MOVIE_PLAYING_INTENT_ACTION;
 import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_BRIDGE_ADDRESS;
 
@@ -10,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,13 +36,21 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.anthonybturner.cinemapostersanywhere.Models.Game;
+import com.anthonybturner.cinemapostersanywhere.Models.Movie;
 import com.anthonybturner.cinemapostersanywhere.Models.Video;
+import com.anthonybturner.cinemapostersanywhere.data.AppDatabase;
+import com.anthonybturner.cinemapostersanywhere.data.MovieDao;
 import com.anthonybturner.cinemapostersanywhere.interfaces.OnVideoDataFetchedListener;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
+import com.anthonybturner.cinemapostersanywhere.services.MovieService;
 import com.anthonybturner.cinemapostersanywhere.services.PostersApiService;
 import com.anthonybturner.cinemapostersanywhere.services.SteamGameService;
 import com.anthonybturner.cinemapostersanywhere.services.WebSocketService;
+import com.anthonybturner.cinemapostersanywhere.Constants.ApexLegendsAPIConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants;
+import com.anthonybturner.cinemapostersanywhere.utilities.GenreUtils;
+import com.anthonybturner.cinemapostersanywhere.utilities.ImageUtils;
+import com.anthonybturner.cinemapostersanywhere.Constants.Steam;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
@@ -51,28 +63,30 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class GameActivity extends AppCompatActivity implements OnVideoDataFetchedListener, TimerUpdateListener {
+public class MovieActivity extends AppCompatActivity implements OnVideoDataFetchedListener, TimerUpdateListener{
 
-    public static final String Game_UPDATED_INTENT_ACTION = "";
-    public static final String STEAM_GAME_PLAYING_ACTION = "STEAM_GAME_UPDATE";
-    public static final String CLOSE_NOW_PLAYING_ACTION = "com.anthonybturner.cinemapostersanywhere.CLOSE_NOW_PLAYING";
-    public static final String APEX_LEGENDS_API_UPDATE_ACTION = "com.anthonybturner.cinemapostersanywhere.STEAM_UPDATE";
+    ;
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1;
-    private TextView GameTitleTextView, GameOverviewTextView, GameCategoryTextView, GameRatingTextView,
+    private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView,
             progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
-    private ImageView GamePosterImageView, tomatoIcon;
+    private ImageView moviePosterImageView, tomatoIcon;
     private ProgressBar progressBar;
     private final Handler handler = new Handler();
     private Timer slideshowTimer;
     private int currentImageIndex = 0;
     private static String lastDisplayedGameId = null;
+    private static long lastDisplayedMovieId = -1;
     private boolean showingNowPlaying = false;
     private boolean isUsingSteamGameSystem = false;
-    private List<Game> gameList = new ArrayList<>();
-    private PostersApiService GameApiService;
+    private List<Movie> movieList = new ArrayList<>();
+    private PostersApiService movieApiService;
+    private MovieDao movieDao;
     private static boolean slideshowRunning;
     private PowerManager.WakeLock wakeLock;
     private SteamGameService steamGameService;
@@ -94,21 +108,25 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         }
     };
 
+    public static boolean isSameMovie(long movieId) {
+        return lastDisplayedMovieId == movieId;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game);
+        setContentView(R.layout.activity_movie);
         initializeViews();
         createButtons();
         //createDrawer();
         initializeRetrofit();
         initializeDatabase();
-        fetchGames();
+        fetchMovies();
         registerReceivers();
         startServices();
         isUsingSteamGameSystem = true;
-    }
 
+    }
     private void createDrawer() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -118,7 +136,6 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         drawerLayout.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
     }
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         // Handle action bar item clicks
@@ -129,33 +146,32 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
     }
 
     private void initializeViews() {
-        GameTitleTextView = findViewById(R.id.game_title);
-        GamePosterImageView = findViewById(R.id.game_poster);
-        GameOverviewTextView = findViewById(R.id.game_overview);
-        GameCategoryTextView = findViewById(R.id.game_category);
-        GameRatingTextView = findViewById(R.id.game_tomato_percentage);
-        progressBar = findViewById(R.id.game_progress_bar);
-        progressText = findViewById(R.id.game_progress_text);
-        adultStatusTextView = findViewById(R.id.game_ratings);
-        originalLanguageTextView = findViewById(R.id.game_og_lang);
-        genresTextView = findViewById(R.id.game_genres);
-        popularityTextView = findViewById(R.id.game_popularity);
-        voteCountTextView = findViewById(R.id.game_vote_count);
-        tomatoIcon = findViewById(R.id.game_tomato_icon);
+        movieTitleTextView = findViewById(R.id.movie_title);
+        moviePosterImageView = findViewById(R.id.movie_poster);
+        movieOverviewTextView = findViewById(R.id.movie_overview);
+        movieCategoryTextView = findViewById(R.id.movie_category);
+        movieRatingTextView = findViewById(R.id.movie_tomato_percentage);
+        progressBar = findViewById(R.id.movie_progress_bar);
+        progressText = findViewById(R.id.movie_progress_text);
+        adultStatusTextView = findViewById(R.id.movie_ratings);
+        originalLanguageTextView = findViewById(R.id.movie_og_lang);
+        genresTextView = findViewById(R.id.movie_genres);
+        popularityTextView = findViewById(R.id.movie_popularity);
+        voteCountTextView = findViewById(R.id.movie_vote_count);
+        tomatoIcon = findViewById(R.id.movie_tomato_icon);
     }
 
     private void createButtons() {
-        findViewById(R.id.button_all).setOnClickListener(v -> fetchGames());
-        findViewById(R.id.button_top_rated).setOnClickListener(v -> fetchGamesByCategory("Top Games"));
-        findViewById(R.id.button_popular).setOnClickListener(v -> fetchGamesByCategory("Popular Games"));
-        findViewById(R.id.button_trending).setOnClickListener(v -> fetchGamesByCategory("Trending Games"));
-        findViewById(R.id.button_settings).setOnClickListener(v -> {
-            Intent intent = new Intent(GameActivity.this, SettingsActivity.class);
+        findViewById(R.id.button_all).setOnClickListener(v -> fetchMovies());
+        findViewById(R.id.button_top_rated).setOnClickListener(v -> fetchMoviesByCategory("Top Movies"));
+        findViewById(R.id.button_popular).setOnClickListener(v -> fetchMoviesByCategory("Popular Movies"));
+        findViewById(R.id.button_trending).setOnClickListener(v -> fetchMoviesByCategory("Trending Movies"));
+        findViewById(R.id.button_settings).setOnClickListener(v ->  { Intent intent = new Intent(MovieActivity.this, SettingsActivity.class);
             startActivity(intent);
         });
         Button steamButton = findViewById(R.id.button_steam);
-        steamButton.setOnClickListener(v -> {
-            if (steamGameService != null) {
+        steamButton.setOnClickListener(v ->  {
+            if(steamGameService != null){
                 steamGameService.checkCurrentGame(true);
             }
         });
@@ -167,20 +183,22 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
                 .baseUrl(PLEX_BRIDGE_ADDRESS)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        GameApiService = retrofit.create(PostersApiService.class);
+        movieApiService = retrofit.create(PostersApiService.class);
     }
 
     private void initializeDatabase() {
-       // gameDAO = AppDatabase.Companion.getInstance(this).GameDao();
+        movieDao = AppDatabase.Companion.getInstance(this).movieDao();
     }
 
     private void registerReceivers() {
         LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
                 new IntentFilter(PLEX_MOVIE_PLAYING_INTENT_ACTION));
         LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
-                new IntentFilter(Game_UPDATED_INTENT_ACTION));
+                new IntentFilter(MOVIE_UPDATED_INTENT_ACTION));
         LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
-                new IntentFilter(STEAM_GAME_PLAYING_ACTION));
+                new IntentFilter(Steam.STEAM_GAME_PLAYING_ACTION));
+        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
+                new IntentFilter(MovieConstants.KODI_MOVIE_PLAYING_INTENT_ACTION));
     }
 
     private void startServices() {
@@ -190,6 +208,9 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         Intent serviceIntent = new Intent(this, SteamGameService.class);
         startService(serviceIntent);
 
+        Intent movieServiceIntent = new Intent(this, MovieService.class);
+        startService(movieServiceIntent);
+
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -197,9 +218,13 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         @Override
         public void onReceive(Context context, @SuppressLint("UnsafeIntentLaunch") Intent intent) {
             String action = intent.getAction();
-            if (STEAM_GAME_PLAYING_ACTION.equals(action) && isUsingSteamGameSystem) {
+            if (PLEX_MOVIE_PLAYING_INTENT_ACTION.equals(action) || MovieConstants.KODI_MOVIE_PLAYING_INTENT_ACTION.equals(action)) {
+                handleNowPlayingIntent(intent);
+            }else if (MOVIE_UPDATED_INTENT_ACTION.equals(action)) {
+                refreshLocalDatabase();
+            }else if (Steam.STEAM_GAME_PLAYING_ACTION.equals(action) && isUsingSteamGameSystem) {
                 handleGamePlaying(intent);
-            } else if (APEX_LEGENDS_API_UPDATE_ACTION.equals(action)) {
+            }else if (ApexLegendsAPIConstants.APEX_LEGENDS_API_UPDATE_ACTION.equals(action)) {
                 handleApexLegendsPlaying(intent);
             }
         }
@@ -211,19 +236,18 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
 
     private void handleGamePlaying(Intent intent) {
         String status = intent.getStringExtra("game_status");
-        if (Objects.equals(status, "success")) {
+        if(Objects.equals(status, "success")){
             // Check if the new game ID is different from the last displayed
             lastDisplayedGameId = intent.getStringExtra("game_id");
-            //stopSlideshow();
+            stopSlideshow();
             showingNowPlaying = true;
             intent.setClass(this, SteamGameActivity.class);
             startActivity(intent);
-        } else if (Objects.equals(status, "failed")) {
+        }else if(Objects.equals(status, "failed")){
             lastDisplayedGameId = "";
             resumeSlideshowFromNowPlaying();
         }
     }
-
     public static boolean isSameGameDisplayed(String gameId) {
         return gameId != null && gameId.equals(lastDisplayedGameId);
     }
@@ -231,58 +255,109 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
     private void handleNowPlayingIntent(Intent intent) {
         String action = intent.getStringExtra("action");
         if ("now_playing".equals(action)) {
-           // showNowPlaying(intent);
+            lastDisplayedMovieId = intent.getLongExtra("id", -1);
+            showNowPlaying(intent);
         } else if ("resume_slideshow".equals(action)) {
             resumeSlideshowFromNowPlaying();
         }
     }
 
     private void resumeSlideshowFromNowPlaying() {
-        Intent closeIntent = new Intent(CLOSE_NOW_PLAYING_ACTION);
+        Intent closeIntent = new Intent(MovieConstants.CLOSE_NOW_PLAYING_ACTION);
         LocalBroadcastManager.getInstance(this).sendBroadcast(closeIntent);
         showingNowPlaying = false;
-       // resumeSlideshow();
+        resumeSlideshow();
     }
 
     private void refreshLocalDatabase() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-           // gameDAO.deleteAllGames();
-           // fetchServerGames();
+            movieDao.deleteAllMovies();
+            fetchServerMovies();
         });
     }
 
-    private void fetchGamesByCategory(String category) {
+    private void fetchMoviesByCategory(String category) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            List<Game> Games = null;//gameDAO.getGamesByCategory(category);
+            List<Movie> movies = movieDao.getMoviesByCategory(category);
             runOnUiThread(() -> {
-                if (!Games.isEmpty()) {
-                    gameList = Games;
-                    Toast.makeText(GameActivity.this, "Fetched " + Games.size() + " " + category + " from DB", Toast.LENGTH_SHORT).show();
-                    //startSlideshow();
+                if (!movies.isEmpty()) {
+                    movieList = movies;
+                    Toast.makeText(MovieActivity.this, "Fetched " + movies.size() + " " + category + " from DB", Toast.LENGTH_SHORT).show();
+                    startSlideshow();
                 } else {
-                    Toast.makeText(GameActivity.this, "No " + category + " found in the database.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MovieActivity.this, "No " + category + " found in the database.", Toast.LENGTH_SHORT).show();
                 }
             });
         });
     }
 
-    private void fetchGames() {
+    private void fetchMovies() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            List<Game> localGames = null;///gameDAO.getAllGames();
+            List<Movie> localMovies = movieDao.getAllMovies();
             runOnUiThread(() -> {
-                if (!localGames.isEmpty()) {
-                    gameList = localGames;
-                    Toast.makeText(GameActivity.this, "Fetched " + gameList.size() + " Games from DB", Toast.LENGTH_SHORT).show();
-                   // hideProgress();
-                  //  startSlideshow();
+                if (!localMovies.isEmpty()) {
+                    movieList = localMovies;
+                    Toast.makeText(MovieActivity.this, "Fetched " + movieList.size() + " Movies from DB", Toast.LENGTH_SHORT).show();
+                    hideProgress();
+                    startSlideshow();
                 } else {
-                   // fetchServerGames();
+                    fetchServerMovies();
                 }
             });
         });
+    }
+
+    private void fetchServerMovies() {
+        movieApiService.getPosters().enqueue(new Callback<List<Movie>>() {
+            @Override
+            public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    processMovies(response.body());
+                } else {
+                    hideProgress();
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Movie>> call, Throwable t) {
+                Log.e("MainActivity", "Failed to fetch movies from Flask API", t);
+                hideProgress();
+            }
+        });
+    }
+
+    private void processMovies(List<Movie> movies) {
+        movieList = movies;
+        int totalFiles = movieList.size();
+        showProgress(totalFiles);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            for (int i = 0; i < totalFiles; i++) {
+                Movie movie = movieList.get(i);
+                processMovie(movie, i, totalFiles);
+            }
+            movieDao.insertMovies(movieList);
+            runOnUiThread(() -> {
+                hideProgress();
+                startSlideshow();
+            });
+        });
+    }
+
+    private void processMovie(Movie movie, int index, int totalFiles) {
+        if (movie.getGenreIds() != null) {
+            String genreNames = GenreUtils.convertGenreIdsToNames(movie.getGenreIds());
+            movie.setGenres(genreNames);
+        }
+        Bitmap bitmap = ImageUtils.downloadImage(movie.getPosterPath());
+        if (bitmap != null) {
+            //Change tmdb api poster path to local image path.
+            String imagePath = ImageUtils.saveImageToStorage(this, bitmap, movie.getTitle() + ".jpg");
+            movie.setPosterImage(imagePath);
+        }
+        updateProgress(index + 1, totalFiles);
     }
 
     private void showProgress(int totalFiles) {
@@ -314,48 +389,48 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
             @Override
             public void run() {
                 handler.post(() -> {
-                    if (showingNowPlaying || gameList.isEmpty()) return;
-                    //currentImageIndex = getRandomGameIndex(flaskGameList.size());
+                    if (showingNowPlaying || movieList.isEmpty()) return;
+                    //currentImageIndex = getRandomMovieIndex(flaskMovieList.size());
                     goNextSlide();
                 });
             }
         }, 0, 15000);
     }
 
-    private int getRandomGameIndex(int GameListSize) {
-        if (currentImageIndex >= GameListSize) {
+    private int getRandomMovieIndex(int movieListSize) {
+        if (currentImageIndex >= movieListSize) {
             currentImageIndex = 0;
         }
-        return new Random().nextInt(GameListSize);
+        return new Random().nextInt(movieListSize);
     }
 
-    private void loadPoster(Game Game) {
-        String posterPath = Game.getPosterImage();
+    private void loadPoster(Movie movie) {
+        String posterPath = movie.getPosterImage();
         if (posterPath != null && !posterPath.isEmpty()) {
-            Glide.with(GameActivity.this)
+            Glide.with(MovieActivity.this)
                     .load(new File(posterPath))
                     .centerCrop()
-                    .into(GamePosterImageView);
+                    .into(moviePosterImageView);
         } else {
-            Glide.with(GameActivity.this)
-                    .load(Game.getPosterPath())
+            Glide.with(MovieActivity.this)
+                    .load(movie.getPosterPath())
                     .centerCrop()
-                    .into(GamePosterImageView);
+                    .into(moviePosterImageView);
         }
     }
 
-    private void updateGameDetails(Game Game) {
+    private void updateMovieDetails(Movie movie) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            setGameTitle(String.format("%s (%s)", Game.getTitle(), Game.getReleaseDateYear()));
+            setMovieTitle(String.format("%s (%s)", movie.getTitle(), movie.getReleaseDateYear()));
         }
-        setGameOverview(Game.getOverview());
-        setGameCategory(Game.getCategory());
-        setGameRatings(Game.getVoteAverage());
-        setAdultStatus(Game.getAdult());
-        setOriginalLanguage(Game.getOriginalLanguage());
-        setGenres(Game.getGenres());
-        setPopularity(Game.getPopularity());
-        setVoteCount(Game.getVoteCount());
+        setMovieOverview(movie.getOverview());
+        setMovieCategory(movie.getCategory());
+        setMovieRatings(movie.getVoteAverage());
+        setAdultStatus(movie.getAdult());
+        setOriginalLanguage(movie.getOriginalLanguage());
+        setGenres(movie.getGenres());
+        setPopularity(movie.getPopularity());
+        setVoteCount(movie.getVoteCount());
     }
 
     private void setAdultStatus(Boolean isAdult) {
@@ -378,7 +453,7 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         voteCountTextView.setText(String.format("Vote Count: [%d]", voteCount));
     }
 
-    private void setGameRatings(float tomatoRating) {
+    private void setMovieRatings(float tomatoRating) {
         if (tomatoIcon == null) {
             Log.e("MainActivity", "Tomato icon ImageView is not initialized");
             return;
@@ -386,19 +461,19 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         float scaledRating = tomatoRating * 10;
         tomatoIcon.setImageResource(scaledRating >= 60.0 ? R.drawable.fresh_tomato : R.drawable.rotten_tomato);
         String formattedRating = String.format("Rating: %.1f", scaledRating);
-        GameRatingTextView.setText(formattedRating + "%");
+        movieRatingTextView.setText(formattedRating + "%");
     }
 
-    private void setGameCategory(String category) {
-        GameCategoryTextView.setText(category);
+    private void setMovieCategory(String category) {
+        movieCategoryTextView.setText(category);
     }
 
-    private void setGameOverview(String overview) {
-        GameOverviewTextView.setText(overview);
+    private void setMovieOverview(String overview) {
+        movieOverviewTextView.setText(overview);
     }
 
-    public void setGameTitle(String title) {
-        GameTitleTextView.setText(title);
+    public void setMovieTitle(String title) {
+        movieTitleTextView.setText(title);
     }
 
     public void showNowPlaying(Intent intent) {
@@ -411,7 +486,8 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
     public void resumeSlideshow() {
         if (!showingNowPlaying) {
             startSlideshow();
-            Toast.makeText(GameActivity.this, "Posters resumed ", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MovieActivity.this, "Posters resumed ", Toast.LENGTH_SHORT).show();
+            slideshowRunning = true;
         }
     }
 
@@ -419,13 +495,13 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
         if (currentImageIndex > 0) {
             currentImageIndex--;
         } else {
-            currentImageIndex = gameList.size() - 1;
+            currentImageIndex = movieList.size() - 1;
         }
         showCurrentSlide();
     }
 
     private void goNextSlide() {
-        if (currentImageIndex < gameList.size() - 1) {
+        if (currentImageIndex < movieList.size() - 1) {
             currentImageIndex++;
         } else {
             currentImageIndex = 0;
@@ -434,9 +510,9 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
     }
 
     private void showCurrentSlide() {
-        Game currentGame = gameList.get(currentImageIndex);
-        loadPoster(currentGame);
-        updateGameDetails(currentGame);
+        Movie currentMovie = movieList.get(currentImageIndex);
+        loadPoster(currentMovie);
+        updateMovieDetails(currentMovie);
     }
 
     public static boolean isSlideshowPlaying() {
@@ -446,6 +522,7 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
     public void stopSlideshow() {
         if (slideshowTimer != null) {
             slideshowTimer.cancel();
+            slideshowRunning = false;
         }
     }
 
@@ -473,7 +550,6 @@ public class GameActivity extends AppCompatActivity implements OnVideoDataFetche
                 return super.onKeyDown(keyCode, event);
         }
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();

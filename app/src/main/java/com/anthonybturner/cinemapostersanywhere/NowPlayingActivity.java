@@ -17,7 +17,7 @@ import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;

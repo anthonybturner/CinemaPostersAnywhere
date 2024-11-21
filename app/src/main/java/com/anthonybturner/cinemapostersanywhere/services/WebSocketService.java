@@ -1,6 +1,6 @@
 package com.anthonybturner.cinemapostersanywhere.services;
 
-import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.PLEX_BRIDGE_ADDRESS;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_BRIDGE_ADDRESS;
 
 import android.app.Service;
 import android.content.Intent;

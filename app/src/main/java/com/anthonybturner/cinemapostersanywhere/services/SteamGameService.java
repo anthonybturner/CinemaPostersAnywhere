@@ -30,7 +30,7 @@ import com.android.volley.toolbox.Volley;
 import com.anthonybturner.cinemapostersanywhere.MovieActivity;
 import com.anthonybturner.cinemapostersanywhere.SteamGameActivity;
 import com.anthonybturner.cinemapostersanywhere.R;
-import com.anthonybturner.cinemapostersanywhere.utilities.SteamConstants;
+import com.anthonybturner.cinemapostersanywhere.Constants.Steam;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -146,8 +146,8 @@ public class SteamGameService extends Service {
         return gameId.equals("1172470");//Apex legend game id, todo: Create constant.
     }
     public void checkCurrentGame(boolean isMapOver) {
-        String url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=" + SteamConstants.STEAM_API_KEY + "&steamids=" + getSteamId();
-        Intent intent = new Intent(SteamConstants.STEAM_GAME_PLAYING_ACTION);
+        String url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=" + Steam.STEAM_API_KEY + "&steamids=" + getSteamId();
+        Intent intent = new Intent(Steam.STEAM_GAME_PLAYING_ACTION);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -188,7 +188,7 @@ public class SteamGameService extends Service {
                                         // SteamGameActivity is currently active
                                         stopShowingGameInfo();
                                     }
-                                    Log.d(TAG, SteamConstants.NO_GAME_CURRENTLY_BEING_PLAYED);
+                                    Log.d(TAG, Steam.NO_GAME_CURRENTLY_BEING_PLAYED);
                                 }
                             }
                         } catch (JSONException e) {
@@ -207,7 +207,7 @@ public class SteamGameService extends Service {
 
 
     private void stopShowingGameInfo() {
-        Intent intent = new Intent(SteamConstants.STEAM_GAME_PLAYING_ACTION);
+        Intent intent = new Intent(Steam.STEAM_GAME_PLAYING_ACTION);
         // Send broadcast to update the UI
         intent.putExtra("game_id", ""); // Include the game ID
         intent.putExtra("game_status", "failed"); // Include the game ID
@@ -215,7 +215,7 @@ public class SteamGameService extends Service {
     }
     private void fetchGameStatsAndAchievements(String gameId, Intent intent, CountDownLatch latch) {
         // API to fetch user stats and achievements for a particular game
-        String url = "https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=" + SteamConstants.STEAM_API_KEY + "&steamid=" + steamID + "&appid=" + gameId;
+        String url = "https://api.steampowered.com/ISteamUserStats/GetUserStatsForGame/v2/?key=" + Steam.STEAM_API_KEY + "&steamid=" + steamID + "&appid=" + gameId;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -259,7 +259,7 @@ public class SteamGameService extends Service {
 
     private void fetchAchievementSchema(String gameId, Map<String, Boolean> userAchievements, Intent intent, CountDownLatch latch) {
         // Fetch achievement schema to get icons
-        String url = "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=" + SteamConstants.STEAM_API_KEY + "&appid=" + gameId;
+        String url = "https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=" + Steam.STEAM_API_KEY + "&appid=" + gameId;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -328,7 +328,7 @@ public class SteamGameService extends Service {
 
     private void fetchGlobalAchievementPercentages(String gameId, Map<String, Boolean> userAchievements, Intent intent, CountDownLatch latch) {
         // Fetch global achievement percentages
-        String url = "https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?key=" + SteamConstants.STEAM_API_KEY + "&gameid=" + gameId;
+        String url = "https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?key=" + Steam.STEAM_API_KEY + "&gameid=" + gameId;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {

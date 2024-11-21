@@ -1,4 +1,4 @@
-package com.anthonybturner.cinemapostersanywhere.utilities;
+package com.anthonybturner.cinemapostersanywhere.Constants;
 
 public class MovieConstants {
     public static final String KODI_MOVIE_PLAYING_INTENT_ACTION = "com.anthonybturner.cinemapostersanywhere.MOVIE_PLAYING";

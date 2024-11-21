@@ -1,7 +1,7 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.MOVIE_UPDATED_INTENT_ACTION;
-import static com.anthonybturner.cinemapostersanywhere.utilities.MovieConstants.PLEX_MOVIE_PLAYING_INTENT_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.MOVIE_UPDATED_INTENT_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_MOVIE_PLAYING_INTENT_ACTION;
 
 import android.content.Context;
 import android.content.Intent;
