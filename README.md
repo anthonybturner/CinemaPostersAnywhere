@@ -1,6 +1,6 @@
 # CinemaPostersAnywhere
 
-**CinemaPostersAnywhere** is an Android application that displays movie posters and information dynamically, providing users with an engaging way to explore films and related content. The app integrates with various APIs, including YouTube, Steam, and TMDB, to enhance user experience and functionality.
+**CinemaPostersAnywhere** is an Android application that displays movie posters and information dynamically, providing users with an engaging way to explore films and related content. The app integrates with various APIs, including YouTube, Steam, TMDB, and PlexMediaServer’s webhooks, to enhance user experience and functionality.
 
 ## Key Features:
 
