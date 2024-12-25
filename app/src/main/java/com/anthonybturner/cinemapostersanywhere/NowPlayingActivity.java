@@ -18,9 +18,11 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants;
+import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Objects;
 
 public class NowPlayingActivity extends AppCompatActivity {
@@ -48,9 +50,11 @@ public class NowPlayingActivity extends AppCompatActivity {
 
     private void setupUI(Intent intent) {
         setTextViewContent(R.id.movie_title, getFormattedTitle(intent));
+        setTextViewContent(R.id.movie_runtime, getFormattedRuntime(intent));
         setTextViewContent(R.id.movie_overview, intent.getStringExtra("overview"));
         setTextViewContent(R.id.movie_studio, intent.getStringExtra("studio"));
-        setTextViewContent(R.id.movie_ratings, intent.getStringExtra("contentRating"));
+        setTextViewContent(R.id.movie_ratings, String.valueOf(intent.getIntExtra("contentRating", 0)));
+
         loadImageIntoView(intent.getStringExtra("posterUrl"), findViewById(R.id.movie_poster));
         if(intent.hasExtra("actorBundle")) {
             setupActorRoles(intent.getBundleExtra("actorBundle"));
@@ -111,7 +115,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
     private LinearLayout createDirectorsLayout() {
         LinearLayout directorCard = new LinearLayout(this);
-        directorCard.setBackgroundResource(R.drawable.achievement_card_selector);
+        //directorCard.setBackgroundResource(R.drawable.achievement_card_selector);
         directorCard.setOrientation(LinearLayout.VERTICAL);
         directorCard.setPadding(8, 8, 8, 8); // Add padding between achievements
         // Create LayoutParams and set the margins
@@ -124,11 +128,17 @@ public class NowPlayingActivity extends AppCompatActivity {
         return directorCard;
 
     }
-
     private String getFormattedTitle(Intent intent) {
-        String title = intent.getStringExtra("title");
         String year = intent.getStringExtra("year");
-        return (year != null && !year.isEmpty()) ? String.format("%s (%s)", title, year) : title;
+        return (year != null && !year.isEmpty()) ? String.format("%s (%s)", intent.getStringExtra("title"), year) : intent.getStringExtra("title");
+    }
+    private String getFormattedRuntime(Intent intent) {
+        String strRuntime = "";
+        long runtime = intent.getLongExtra("runtime", 0);
+        if (runtime != 0) {
+            strRuntime += String.format(Locale.ENGLISH, "Runtime: %s ", Converters.convertSecondsToTime(runtime));
+        }
+        return strRuntime;
     }
 
     private void setTextViewContent(int textViewId, String content) {

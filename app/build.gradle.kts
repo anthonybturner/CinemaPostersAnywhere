@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    kotlin("kapt") // kapt for annotation processing
+    kotlin("kapt") // For annotation processing
 }
 
 android {
@@ -14,9 +14,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
@@ -45,79 +43,59 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+        dataBinding = true // Enables Data Binding
     }
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
 
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
+    packaging.resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
 }
 
 dependencies {
     // Core Android libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.adapters)
-    implementation(libs.androidx.cardview)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Jetpack Compose and Room dependencies
-    val room_version = "2.5.0"
-    implementation(libs.androidx.room.runtime)
-    kapt(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.ktx)
-
-    // For ViewModel with Coroutines support
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
-
+    // Jetpack Compose and UI dependencies
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.tv.foundation)
     implementation(libs.androidx.tv.material)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Gson for JSON parsing
+    // Room Database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
+
+
+    // Lifecycle components
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    // Networking libraries
     implementation(libs.gson)
-
-    // Retrofit for networking and Gson integration
     implementation(libs.retrofit)
-    implementation(libs.retrofit.gson.converter)
-
-    // Glide for image loading using KSP
-    implementation(libs.glide)
-
-    // Socket.IO for real-time communication
-    implementation(libs.socket.io.client.v201)
-
-    // OKHttp for HTTP networking
+    implementation(libs.converter.gson)
     implementation(libs.okhttp)
 
-    // AndroidX Libraries
-    implementation(libs.androidx.constraintlayout)
+    // Image loading
+    implementation(libs.glide)
+
+    // Volley for networking
     implementation(libs.volley)
 
-    // LocalBroadcastManager for broadcasting intents
+    // LocalBroadcastManager
     implementation(libs.androidx.localbroadcastmanager)
+
+    // Material Components
+    implementation(libs.material)
 
     // Testing libraries
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
 
-    // Debugging tools
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-
-    implementation (libs.androidx.drawerlayout)
-    implementation (libs.material) // For Navigation Drawer
-
-    implementation (libs.androidx.recyclerview.v130)
-
+    implementation (libs.socket.io.client.v210)
 
 }
-

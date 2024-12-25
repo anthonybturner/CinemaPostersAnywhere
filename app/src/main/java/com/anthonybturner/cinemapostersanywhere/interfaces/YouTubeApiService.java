@@ -1,7 +1,6 @@
 package com.anthonybturner.cinemapostersanywhere.interfaces;
 
 import com.anthonybturner.cinemapostersanywhere.Models.YouTubeResponse;
-import com.anthonybturner.cinemapostersanywhere.SteamGameActivity;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

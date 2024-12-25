@@ -55,6 +55,15 @@
                 android:textColor="@android:color/white"
                 android:textAppearance="@style/TextAppearance.AppCompat.Large"
                 android:textStyle="bold" />
+            <TextView
+                android:id="@+id/movie_runtime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/movie_runtime"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                android:textStyle="bold" />
     <!-- Extra Movie Info -->
         <LinearLayout
             android:id="@+id/movie_extra"

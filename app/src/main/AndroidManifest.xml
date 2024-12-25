@@ -36,24 +36,14 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MovieActivity"/>
         <activity android:name=".NowPlayingActivity"/>
-        <activity android:name=".SteamGameActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar"/>
-        <activity android:name=".AchievementActivity" />
-        <activity android:name=".RequirementsActivity" />
-        <activity android:name=".ApexLegendsActivity" />
         <activity android:name=".SettingsActivity" />
 
         <!-- WebSocketService as a foreground service -->
         <service
             android:name=".services.WebSocketService"
             android:exported="false" />
-        <service android:name=".services.SteamGameService"
-            android:exported="false" />
         <service android:name=".services.MovieService"
-            android:exported="false" />
-        <service android:name=".services.ApexLegendsAPIService"
             android:exported="false" />
     </application>
 </manifest>

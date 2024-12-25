@@ -81,6 +81,20 @@ public class Converters {
         long seconds = totalSeconds % 60;
         return String.format(Locale.ENGLISH, "Time: %02dh:%02dm:%02ds", hours, minutes, seconds);
     }
+    public static String convertMinutesToHours(long totalMinutes) {
+        long hours = totalMinutes / 60; // Calculate hours
+        long minutes = totalMinutes % 60; // Calculate remaining minutes
+
+        // Format the result as "X hours Y minutes"
+        return hours + " hours " + minutes + " minutes";
+    }
+    public static String convertSecondsToTime(long seconds) {
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long remainingSeconds = seconds % 60;
+        return String.format(Locale.ENGLISH, "%d:%d:%d", hours, minutes, remainingSeconds);
+    }
+
     // Convert a comma-separated String back to List<Integer>
     @TypeConverter
     public static List<Integer> toGenreIdsList(String genreIdsString) {

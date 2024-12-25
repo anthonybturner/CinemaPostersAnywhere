@@ -28,7 +28,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.anthonybturner.cinemapostersanywhere.Constants.SharedPrefsConstants;
-import com.anthonybturner.cinemapostersanywhere.MovieActivity;
+import com.anthonybturner.cinemapostersanywhere.MainActivity;
 import com.anthonybturner.cinemapostersanywhere.interfaces.TimerUpdateListener;
 import com.anthonybturner.cinemapostersanywhere.R;
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
@@ -51,10 +51,7 @@ public class MovieService extends Service {
     private Handler handler;
     private Runnable runnable;
     private RequestQueue requestQueue;
-    private CountDownTimer mapCountDownTimer, rankedMapCountDownTimer, arenasMapCountDownTimer;
-    private static String steamID;
     private List<TimerUpdateListener> listenersList;
-    private TimerUpdateListener timerUpdateListener;
 
     private final IBinder binder = new LocalBinder();
 
@@ -101,7 +98,7 @@ public class MovieService extends Service {
             // Permission is not granted; don't post the notification
             return;
         }
-        Intent intent = new Intent(this, MovieActivity.class);
+        Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
@@ -125,6 +122,7 @@ public class MovieService extends Service {
     }
 
     private void monitorActiveMovieStatus() {
+        // Create a runnable to check kodi for a current playing movie every 30 seconds
         runnable = new Runnable() {
             @Override
             public void run() {
@@ -136,10 +134,9 @@ public class MovieService extends Service {
     }
     public void checkCurrentMovie() {
         SharedPreferences sharedPreferences = getSharedPreferences(SharedPrefsConstants.PREFS_KEY_APP_PREFERENCES, MODE_PRIVATE);
-        String ip = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_IP_ADDRESS, SharedPrefsConstants.PREF_VALUE_DEFAULT_KODI_IP_ADDRESS);
-        String port = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_PORT, SharedPrefsConstants.PREF_VALUE_DEFAULT_KODI_PORT);
-        String kodiUrl = String.format("http://%s:%s/jsonrpc", ip, port);
-        //String url = "http://192.168.1.171:8080/jsonrpc";
+        String kodiIP = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_IP_ADDRESS, SharedPrefsConstants.PREF_VALUE_DEFAULT_KODI_IP_ADDRESS);
+        String kodiPort = sharedPreferences.getString(SharedPrefsConstants.PREF_KEY_KODI_PORT, SharedPrefsConstants.PREF_VALUE_DEFAULT_KODI_PORT);
+        String kodiUrl = String.format("http://%s:%s/jsonrpc", kodiIP, kodiPort);
         try {
             JSONObject jsonRequest = createGetItemRequestParams(); // Create the JSON-RPC payload
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, kodiUrl, jsonRequest,
@@ -156,8 +153,8 @@ public class MovieService extends Service {
                         }
                     });
             requestQueue.add(jsonObjectRequest);
-        } catch (JSONException e) {
-            e.printStackTrace();
+        } catch (JSONException error) {
+            Log.e(TAG, "Error fetching current movie: " + error.getMessage());
         }
     }
     private void handleMovieResponse(JSONObject response) {
@@ -179,7 +176,7 @@ public class MovieService extends Service {
             JSONObject item = results.getJSONObject("item");
             if (isItemValid(item)) {
                 long movieId = item.getLong("id");
-                if (MovieActivity.isSameMovie(movieId)) return;
+                if (MainActivity.isSameMovie(movieId)) return;
                 // Populate the intent with movie details
                 Intent intent = buildMovieIntent(item, movieId);
                 fetchDirectorImages(item, intent);
@@ -192,7 +189,7 @@ public class MovieService extends Service {
     }
 
     private void checkAndResumeSlideshow() {
-        if(!MovieActivity.isSlideshowPlaying()){
+        if(!MainActivity.isSlideshowPlaying()){
             sendSlideshowResumeIntent();
         }
     }

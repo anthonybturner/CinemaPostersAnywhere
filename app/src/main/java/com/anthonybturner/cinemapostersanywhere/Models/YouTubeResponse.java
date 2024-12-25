@@ -1,6 +1,5 @@
 package com.anthonybturner.cinemapostersanywhere.Models;
 
-import com.anthonybturner.cinemapostersanywhere.SteamGameActivity;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
