@@ -10,11 +10,11 @@ import retrofit2.http.GET;
 public interface PostersApiService {
 
     @GET("/api/posters")
-    Call<List<Movie>> getPosters();  // Fetch trending movies from Flask API
+    Call<List<Movie>> getPosters();  // Fetch posters from API
     @GET("/api/fetch-trending")
-    Call<List<Movie>> getTrendingPosters();  // Fetch trending movies from Flask API
+    Call<List<Movie>> getTrendingPosters();  // Fetch trending movies from API
     @GET("/api/fetch-popular")
-    Call<List<Movie>> getPopularPosters();  // Fetch trending movies from Flask API
+    Call<List<Movie>> getPopularPosters();  // Fetch popular movies from API
     @GET("/api/fetch-top-rated")
-    Call<List<Movie>> getTopRatedPosters();  // Fetch trending movies from Flask API
+    Call<List<Movie>> getTopRatedPosters();  // Fetch top rated movies from API
 }

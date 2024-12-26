@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants;
+
 import java.util.Objects;
 
 public class NowPlayingReceiver extends BroadcastReceiver {
@@ -14,9 +16,9 @@ public class NowPlayingReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getStringExtra("action");
-        if (Objects.equals(action, "now_playing")) {
+        if (Objects.equals(action, MovieConstants.ACTION_MOVIE_NOW_PLAYING)) {
             mainActivity.showNowPlaying(intent);
-        } else if (Objects.equals(action, "resume_slideshow")) {
+        } else if (Objects.equals(action, MovieConstants.ACTION_MOVIE_RESUME_SLIDESHOW)) {
             mainActivity.startSlideshow();
         }
     }

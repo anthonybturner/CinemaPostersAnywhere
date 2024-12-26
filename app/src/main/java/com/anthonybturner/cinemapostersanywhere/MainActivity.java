@@ -1,7 +1,9 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.MOVIE_UPDATED_INTENT_ACTION;
-import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_MOVIE_PLAYING_INTENT_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_KODI_MOVIE_PLAYING;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_MOVIE_RESUME_SLIDESHOW;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_MOVIE_UPDATED;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_PLEX_MOVIE_PLAYING;
 import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_BRIDGE_ADDRESS;
 
 import android.annotation.SuppressLint;
@@ -19,21 +21,23 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.anthonybturner.cinemapostersanywhere.Models.Movie;
 import com.anthonybturner.cinemapostersanywhere.data.AppDatabase;
 import com.anthonybturner.cinemapostersanywhere.data.MovieDao;
+import com.anthonybturner.cinemapostersanywhere.interfaces.FetchCompleteCallback;
 import com.anthonybturner.cinemapostersanywhere.services.MovieService;
 import com.anthonybturner.cinemapostersanywhere.services.PostersApiService;
 import com.anthonybturner.cinemapostersanywhere.services.WebSocketService;
@@ -45,11 +49,8 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -58,27 +59,29 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-
-    ;
+    public static boolean isSameMovie(long movieId) {
+        return lastDisplayedMovieId == movieId;
+    }
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1;
-    private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView,
-            progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
-    private ImageView moviePosterImageView, tomatoIcon;
-    private ProgressBar progressBar;
-    private final Handler handler = new Handler();
-    private Timer slideshowTimer;
-    private int currentImageIndex = 0;
-    private static String lastDisplayedGameId = null;
     private static long lastDisplayedMovieId = -1;
-    private boolean showingNowPlaying = false;
-    private boolean isUsingSteamGameSystem = false;
-    private List<Movie> movieList = new ArrayList<>();
+    private static boolean slideshowRunning;
+    private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView, progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
+    private ImageView moviePosterImageView, tomatoIcon;
+    private View btnCatNowPlaying;
+    private ProgressBar progressBar;
+    private Intent intentNowPlaying;
+    private final Handler handler = new Handler();
     private PostersApiService movieApiService;
     private MovieDao movieDao;
-    private static boolean slideshowRunning;
-    private PowerManager.WakeLock wakeLock;
+    private Timer slideshowTimer;
+    private List<Movie> movieList = new ArrayList<>();
+    private int currentImageIndex = 0;
+    private boolean showingNowPlaying = false;
     private boolean bound;
+    private PowerManager.WakeLock wakeLock;
     private ActionBarDrawerToggle drawerToggle;
+    private MutableLiveData<String> selectedCategory = new MutableLiveData<>();// LiveData for selected category
+    private LiveData<List<Movie>> moviesByCategory;// LiveData for movies by category
 
     // Service Connection
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -92,204 +95,78 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public static boolean isSameMovie(long movieId) {
-        return lastDisplayedMovieId == movieId;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_movie);
+        setContentView(R.layout.activity_main);
         initializeViews();
         createButtons();
-        initializeRetrofit();
+        initPlexWebSocket();
         initializeDatabase();
-        fetchMovies();
         registerReceivers();
         startServices();
     }
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // Handle action bar item clicks
-        if (drawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
-    private void initializeViews() {
-        movieTitleTextView = findViewById(R.id.movie_title);
-        moviePosterImageView = findViewById(R.id.movie_poster);
-        movieOverviewTextView = findViewById(R.id.movie_overview);
-        movieCategoryTextView = findViewById(R.id.movie_category);
-        movieRatingTextView = findViewById(R.id.movie_tomato_percentage);
-        progressBar = findViewById(R.id.movie_progress_bar);
-        progressText = findViewById(R.id.movie_progress_text);
-        adultStatusTextView = findViewById(R.id.movie_ratings);
-        originalLanguageTextView = findViewById(R.id.movie_og_lang);
-        genresTextView = findViewById(R.id.movie_genres);
-        popularityTextView = findViewById(R.id.movie_popularity);
-        voteCountTextView = findViewById(R.id.movie_vote_count);
-        tomatoIcon = findViewById(R.id.movie_tomato_icon);
-    }
+/************************************* UI Methods**********************************************************/
+private void initializeViews() {
+    movieTitleTextView = findViewById(R.id.movie_title);
+    moviePosterImageView = findViewById(R.id.movie_poster);
+    movieOverviewTextView = findViewById(R.id.movie_overview);
+    movieCategoryTextView = findViewById(R.id.movie_category);
+    movieRatingTextView = findViewById(R.id.movie_tomato_percentage);
+    progressBar = findViewById(R.id.movie_progress_bar);
+    progressText = findViewById(R.id.movie_progress_text);
+    adultStatusTextView = findViewById(R.id.movie_ratings);
+    originalLanguageTextView = findViewById(R.id.movie_country);
+    genresTextView = findViewById(R.id.movie_genres);
+    popularityTextView = findViewById(R.id.movie_popularity);
+    voteCountTextView = findViewById(R.id.movie_vote_count);
+    tomatoIcon = findViewById(R.id.movie_tomato_icon);
+}
 
     private void createButtons() {
-        findViewById(R.id.button_all).setOnClickListener(v -> fetchMovies());
-        findViewById(R.id.button_top_rated).setOnClickListener(v -> fetchMoviesByCategory("Top Movies"));
-        findViewById(R.id.button_popular).setOnClickListener(v -> fetchMoviesByCategory("Popular Movies"));
-        findViewById(R.id.button_trending).setOnClickListener(v -> fetchMoviesByCategory("Trending Movies"));
-        findViewById(R.id.button_settings).setOnClickListener(v ->  { Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+        findViewById(R.id.btn_category_all).setOnClickListener(v -> observeAllMovies());
+        findViewById(R.id.btn_category_top_rated).setOnClickListener(v -> onUpdateCategorySelection("Top Rated Movies"));
+        findViewById(R.id.btn_category_popular).setOnClickListener(v -> onUpdateCategorySelection("Popular Movies"));
+        findViewById(R.id.btn_category_trending).setOnClickListener(v -> onUpdateCategorySelection("Trending Movies"));
+        // Check if NowPlaying Activity is playing
+        btnCatNowPlaying = findViewById(R.id.btn_category_now_playing);
+        btnCatNowPlaying.setOnClickListener(v -> {
+            handleNowPlayingIntent(intentNowPlaying);
+        });
+        findViewById(R.id.btn_settings).setOnClickListener(v ->  { Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
         });
     }
 
-    private void initializeRetrofit() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(PLEX_BRIDGE_ADDRESS)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        movieApiService = retrofit.create(PostersApiService.class);
-    }
-
-    private void initializeDatabase() {
-        movieDao = AppDatabase.Companion.getInstance(this).movieDao();
-    }
-
-    private void registerReceivers() {
-        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
-                new IntentFilter(PLEX_MOVIE_PLAYING_INTENT_ACTION));
-        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
-                new IntentFilter(MOVIE_UPDATED_INTENT_ACTION));
-        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
-                new IntentFilter(MovieConstants.KODI_MOVIE_PLAYING_INTENT_ACTION));
-    }
-
-    private void startServices() {
-        Intent socketServiceIntent = new Intent(this, WebSocketService.class);
-        startService(socketServiceIntent);
-
-        Intent movieServiceIntent = new Intent(this, MovieService.class);
-        startService(movieServiceIntent);
-    }
-
-    private final BroadcastReceiver nowPlayingReceiver = new BroadcastReceiver() {
+public void startSlideshow() {
+    stopSlideshow();
+    slideshowRunning = true;
+    slideshowTimer = new Timer();
+    slideshowTimer.schedule(new TimerTask() {
         @Override
-        public void onReceive(Context context, @SuppressLint("UnsafeIntentLaunch") Intent intent) {
-            String action = intent.getAction();
-            if (PLEX_MOVIE_PLAYING_INTENT_ACTION.equals(action) || MovieConstants.KODI_MOVIE_PLAYING_INTENT_ACTION.equals(action)) {
-                handleNowPlayingIntent(intent);
-            }else if (MOVIE_UPDATED_INTENT_ACTION.equals(action)) {
-                refreshLocalDatabase();
-            }
-        }
-    };
-
-    private void handleNowPlayingIntent(Intent intent) {
-        String action = intent.getStringExtra("action");
-        if ("now_playing".equals(action)) {
-            lastDisplayedMovieId = intent.getLongExtra("id", -1);
-            showNowPlaying(intent);
-        } else if ("resume_slideshow".equals(action)) {
-            resumeSlideshowFromNowPlaying();
-        }
-    }
-
-    private void resumeSlideshowFromNowPlaying() {
-        Intent closeIntent = new Intent(MovieConstants.CLOSE_NOW_PLAYING_ACTION);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(closeIntent);
-        showingNowPlaying = false;
-        resumeSlideshow();
-    }
-
-    private void refreshLocalDatabase() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            movieDao.deleteAllMovies();
-            fetchServerMovies();
-        });
-    }
-
-    private void fetchMoviesByCategory(String category) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            List<Movie> movies = movieDao.getMoviesByCategory(category);
-            runOnUiThread(() -> {
-                if (!movies.isEmpty()) {
-                    movieList = movies;
-                    Toast.makeText(MainActivity.this, "Fetched " + movies.size() + " " + category + " from DB", Toast.LENGTH_SHORT).show();
-                    startSlideshow();
-                } else {
-                    Toast.makeText(MainActivity.this, "No " + category + " found in the database.", Toast.LENGTH_SHORT).show();
-                }
+        public void run() {
+            handler.post(() -> {
+                if (showingNowPlaying || movieList.isEmpty()) return;
+                goNextSlide();
             });
-        });
-    }
-
-    private void fetchMovies() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            List<Movie> localMovies = movieDao.getAllMovies();
-            runOnUiThread(() -> {
-                if (!localMovies.isEmpty()) {
-                    movieList = localMovies;
-                    Toast.makeText(MainActivity.this, "Fetched " + movieList.size() + " Movies from DB", Toast.LENGTH_SHORT).show();
-                    hideProgress();
-                    startSlideshow();
-                } else {
-                    fetchServerMovies();
-                }
-            });
-        });
-    }
-
-    private void fetchServerMovies() {
-        movieApiService.getPosters().enqueue(new Callback<List<Movie>>() {
-            @Override
-            public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    processMovies(response.body());
-                } else {
-                    hideProgress();
-                }
-            }
-            @Override
-            public void onFailure(Call<List<Movie>> call, Throwable t) {
-                Log.e("MainActivity", "Failed to fetch movies from Flask API", t);
-                hideProgress();
-            }
-        });
-    }
-
-    private void processMovies(List<Movie> movies) {
-        movieList = movies;
-        int totalFiles = movieList.size();
-        showProgress(totalFiles);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            for (int i = 0; i < totalFiles; i++) {
-                Movie movie = movieList.get(i);
-                processMovie(movie, i, totalFiles);
-            }
-            movieDao.insertMovies(movieList);
-            runOnUiThread(() -> {
-                hideProgress();
-                startSlideshow();
-            });
-        });
-    }
-
-    private void processMovie(Movie movie, int index, int totalFiles) {
-        if (movie.getGenreIds() != null) {
-            String genreNames = GenreUtils.convertGenreIdsToNames(movie.getGenreIds());
-            movie.setGenres(genreNames);
         }
-        Bitmap bitmap = ImageUtils.downloadImage(movie.getPosterPath());
-        if (bitmap != null) {
-            //Change tmdb api poster path to local image path.
-            String imagePath = ImageUtils.saveImageToStorage(this, bitmap, movie.getTitle() + ".jpg");
-            movie.setPosterImage(imagePath);
+    }, 0, 15000);
+}
+
+    private void loadPoster(Movie movie) {
+        String posterPath = movie.getPosterImage();
+        if (posterPath != null && !posterPath.isEmpty()) {
+            Glide.with(MainActivity.this)
+                    .load(new File(posterPath))
+                    .centerCrop()
+                    .into(moviePosterImageView);
+        } else {
+            Glide.with(MainActivity.this)
+                    .load(movie.getPosterPath())
+                    .centerCrop()
+                    .into(moviePosterImageView);
         }
-        updateProgress(index + 1, totalFiles);
     }
 
     private void showProgress(int totalFiles) {
@@ -307,48 +184,9 @@ public class MainActivity extends AppCompatActivity {
             progressText.setText(String.format("Loading posters...\n%d/%d (%d%%)", currentFile, totalFiles, percentage));
         });
     }
-
     private void hideProgress() {
         progressBar.setVisibility(View.GONE);
         progressText.setVisibility(View.GONE);
-    }
-
-    public void startSlideshow() {
-        stopSlideshow();
-        slideshowRunning = true;
-        slideshowTimer = new Timer();
-        slideshowTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                handler.post(() -> {
-                    if (showingNowPlaying || movieList.isEmpty()) return;
-                    //currentImageIndex = getRandomMovieIndex(flaskMovieList.size());
-                    goNextSlide();
-                });
-            }
-        }, 0, 15000);
-    }
-
-    private int getRandomMovieIndex(int movieListSize) {
-        if (currentImageIndex >= movieListSize) {
-            currentImageIndex = 0;
-        }
-        return new Random().nextInt(movieListSize);
-    }
-
-    private void loadPoster(Movie movie) {
-        String posterPath = movie.getPosterImage();
-        if (posterPath != null && !posterPath.isEmpty()) {
-            Glide.with(MainActivity.this)
-                    .load(new File(posterPath))
-                    .centerCrop()
-                    .into(moviePosterImageView);
-        } else {
-            Glide.with(MainActivity.this)
-                    .load(movie.getPosterPath())
-                    .centerCrop()
-                    .into(moviePosterImageView);
-        }
     }
 
     private void updateMovieDetails(Movie movie) {
@@ -363,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
         setGenres(movie.getGenres());
         setPopularity(movie.getPopularity());
         setVoteCount(movie.getVoteCount());
+        loadPoster(movie);
     }
 
     private void setAdultStatus(Boolean isAdult) {
@@ -443,7 +282,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void showCurrentSlide() {
         Movie currentMovie = movieList.get(currentImageIndex);
-        loadPoster(currentMovie);
         updateMovieDetails(currentMovie);
     }
 
@@ -458,6 +296,188 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    private void updateNowPlayingButtonVisibility() {
+        if(intentNowPlaying != null){
+            btnCatNowPlaying.setVisibility(View.VISIBLE);
+        }else{
+            btnCatNowPlaying.setVisibility(View.GONE);
+        }
+    }
+
+/************************************* Database and Observer Methods**********************************************************/
+
+    // Initialize the Plex WebSocket, used for communication with railway server to get movie details
+    private void initPlexWebSocket() {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(PLEX_BRIDGE_ADDRESS)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        movieApiService = retrofit.create(PostersApiService.class);
+    }
+
+    private void initializeDatabase() {
+        movieDao = AppDatabase.Companion.getInstance(this).movieDao();
+        // Observe LiveData to fetch movies
+        movieDao.getAllMovies().observe(this, new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(List<Movie> localMovies) {
+                if (localMovies != null && !localMovies.isEmpty()) {
+                    movieList = localMovies;
+                    onFetchCompleteCallback.onFetchComplete(null); // Call the callback here
+                } else {
+                    fetchServerPosters(onFetchCompleteCallback); // If no movies are found, fetch from server
+                }
+            }
+        });
+        // Observe the selected category and fetch movies when it changes
+        selectedCategory.observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String category) {
+                if (category != null) {
+                    observeMoviesByCategory(category);
+                }
+            }
+        });
+    }
+    private void observeAllMovies() {
+        if (moviesByCategory != null) {
+            moviesByCategory.removeObservers(this); // Remove previous observers
+        }
+
+        // Fetch LiveData for all movies
+        moviesByCategory = movieDao.getAllMovies();
+        moviesByCategory.observe(this, new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(List<Movie> movies) {
+                if (movies != null && !movies.isEmpty()) {
+                    movieList = movies;
+                    onFetchCompleteCallback.onFetchComplete(null);
+                    Toast.makeText(MainActivity.this, "Fetched " + movies.size() + " movies from DB", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "No movies found locally. Fetching from server...", Toast.LENGTH_SHORT).show();
+                    fetchServerPosters(onFetchCompleteCallback);
+                }
+            }
+        });
+    }
+
+    private void observeMoviesByCategory(String category) {
+        if (moviesByCategory != null) {
+            moviesByCategory.removeObservers(this); // Remove previous observers
+        }
+        // Fetch LiveData for the new category
+        moviesByCategory = movieDao.getMoviesByCategory(category);
+        moviesByCategory.observe(this, new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(List<Movie> movies) {
+                if (movies != null && !movies.isEmpty()) {
+                    movieList = movies;
+                    Toast.makeText(MainActivity.this, "Fetched " + movies.size() + " " + category + " movies from DB", Toast.LENGTH_SHORT).show();
+                    onFetchCompleteCallback.onFetchComplete(null);
+                } else {
+                    Toast.makeText(MainActivity.this, "No " + category + " movies found in the database.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+    private void onUpdateCategorySelection(String category) {
+        selectedCategory.setValue(category);
+    }
+    FetchCompleteCallback onFetchCompleteCallback = new FetchCompleteCallback() {// Callback for fetching movies
+        @Override
+        public void onFetchComplete(Intent intent) {
+            runOnUiThread(() -> {
+                //  hideProgress();
+                startSlideshow();
+            });
+        }
+    };
+    private void registerReceivers() {
+        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
+                new IntentFilter(ACTION_PLEX_MOVIE_PLAYING));
+        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
+                new IntentFilter(ACTION_KODI_MOVIE_PLAYING));
+        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
+                new IntentFilter(ACTION_MOVIE_RESUME_SLIDESHOW));
+        LocalBroadcastManager.getInstance(this).registerReceiver(nowPlayingReceiver,
+                new IntentFilter(ACTION_MOVIE_UPDATED));
+    }
+    private final BroadcastReceiver nowPlayingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, @SuppressLint("UnsafeIntentLaunch") Intent intent) {
+            intentNowPlaying  = intent;
+            String action = intent.getAction();
+            if (ACTION_PLEX_MOVIE_PLAYING.equals(action) || ACTION_KODI_MOVIE_PLAYING.equals(action)) {
+                handleNowPlayingIntent(intent);
+            }else if(ACTION_MOVIE_RESUME_SLIDESHOW.equals(action)){
+                Intent closeIntent = new Intent(MovieConstants.ACTION_KODI_MOVIE_CLOSING);
+                LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(closeIntent);
+                showingNowPlaying = false;
+                intentNowPlaying = null;
+                btnCatNowPlaying.setVisibility(View.GONE);
+                resumeSlideshow();
+            }else if (ACTION_MOVIE_UPDATED.equals(action)) {
+                refreshLocalDatabase();
+            }
+        }
+    };
+    private void startServices() {
+        Intent socketServiceIntent = new Intent(this, WebSocketService.class);
+        startService(socketServiceIntent);
+
+        Intent movieServiceIntent = new Intent(this, MovieService.class);
+        startService(movieServiceIntent);
+    }
+
+    private void handleNowPlayingIntent(Intent intent) {
+        lastDisplayedMovieId = intent.getLongExtra("id", -1);
+        showNowPlaying(intent);
+    }
+    private void refreshLocalDatabase() {
+        movieDao.deleteAllMovies();
+    }
+
+    private void fetchServerPosters(FetchCompleteCallback callback) {
+        movieApiService.getPosters().enqueue(new Callback<List<Movie>>() {
+            @Override
+            public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    processMovies(response.body());
+                    callback.onFetchComplete(null);
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Movie>> call, Throwable t) {
+                Log.e("MainActivity", "Failed to fetch movies from Flask API", t);
+                hideProgress();
+            }
+        });
+    }
+    private void processMovies(List<Movie> movies) {
+        movieList = movies;
+        int totalFiles = movieList.size();
+            for (int i = 0; i < totalFiles; i++) {
+                Movie movie = movieList.get(i);
+                processMovie(movie, i, totalFiles);
+            }
+            movieDao.insertMovies(movieList);
+    }
+    private void processMovie(Movie movie, int index, int totalFiles) {
+        if (movie.getGenreIds() != null) {
+            String genreNames = GenreUtils.convertGenreIdsToNames(movie.getGenreIds());
+            movie.setGenres(genreNames);
+        }
+        Bitmap bitmap = ImageUtils.downloadImage(movie.getPosterPath());
+        if (bitmap != null) {
+            //Change tmdb api poster path to local image path.
+            String imagePath = ImageUtils.saveImageToStorage(this, bitmap, movie.getTitle() + ".jpg");
+            movie.setPosterImage(imagePath);
+        }
+        //updateProgress(index + 1, totalFiles);
+    }
+
+    /********************************************************* Events *****************************************************/
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
@@ -482,6 +502,13 @@ public class MainActivity extends AppCompatActivity {
                 return super.onKeyDown(keyCode, event);
         }
     }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        updateNowPlayingButtonVisibility();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

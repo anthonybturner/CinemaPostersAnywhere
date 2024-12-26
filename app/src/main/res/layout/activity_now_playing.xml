@@ -20,6 +20,7 @@
         android:id="@+id/main_panel"
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:padding="12dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -30,76 +31,75 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:padding="12dp"
             android:background="@drawable/rounded_border_transparent"
             android:elevation="4dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
-            <!-- Movie Category -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <!-- Movie Title centered -->
+                <TextView
+                    android:id="@+id/movie_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/movie_title"
+                    android:textColor="@android:color/holo_orange_dark"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                    android:textStyle="bold"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                />
+                <!-- Movie Category -->
+                <TextView
+                    android:id="@+id/movie_category"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/movie_status"
+                    android:textColor="@android:color/white"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                    android:textAlignment="center"
+                    android:textStyle="bold"
+                    android:layout_alignParentEnd="true"
+                    />
+            </RelativeLayout>
             <TextView
-                android:id="@+id/movie_category"
+                android:id="@+id/movie_tagline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/now_playing"
-                android:textColor="@android:color/white"
-                android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-                android:textAlignment="center"
-                android:textStyle="bold" />
-            <!-- Movie Title -->
-            <TextView
-                android:id="@+id/movie_title"
+                android:layout_marginEnd="8dp"
+                android:text="@string/movie_tagline"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                android:textColor="@android:color/white" />
+            <!-- Extra Movie Info -->
+            <LinearLayout
+                android:id="@+id/movie_extra"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/movie_title"
-                android:textAlignment="center"
-                android:textColor="@android:color/white"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:textStyle="bold" />
-            <TextView
-                android:id="@+id/movie_runtime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/movie_runtime"
-                android:textAlignment="center"
-                android:textColor="@android:color/white"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:textStyle="bold" />
-    <!-- Extra Movie Info -->
-        <LinearLayout
-            android:id="@+id/movie_extra"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:background="#00000000"
-            android:textAlignment="center"
-            android:layout_gravity="center_horizontal"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-        <!-- Ratings -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/rated"
-            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-            android:textColor="@android:color/white"
-            android:textStyle="italic" />
-        <TextView
-            android:id="@+id/movie_ratings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/adult_status"
-            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-            android:textColor="@android:color/white"
-            android:layout_marginEnd="8dp" />
-        <!-- Studio -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/studio"
-            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-            android:textColor="@android:color/white" />
+                android:orientation="horizontal"
+                android:background="#00000000"
+                app:layout_constraintTop_toBottomOf="@id/top_menu"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+            </LinearLayout>
+        </LinearLayout>
+        <!-- Left Pane: Side Button Menu -->
+    <LinearLayout
+        android:id="@+id/side_button_menu"
+        android:layout_width="200dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:padding="4dp"
+        android:orientation="vertical"
+        android:background="@drawable/rounded_border_transparent"
+        android:gravity="top"
+        android:elevation="1dp"
+        app:layout_constraintTop_toBottomOf="@id/top_menu"
+        app:layout_constraintStart_toStartOf="parent">
+
         <TextView
             android:id="@+id/movie_studio"
             android:layout_width="wrap_content"
@@ -107,8 +107,48 @@
             android:text="@string/studio"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
             android:textColor="@android:color/white"
-            android:layout_marginEnd="8dp" />
-            <!--tomato rating -->
+            android:layout_marginEnd="@dimen/movie_extra_margin"
+            />
+        <!-- TextView for Genres -->
+        <TextView
+            android:id="@+id/movie_genres"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/movie_extra_margin"
+            android:text="@string/genres"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@android:color/white" />
+        <TextView
+            android:id="@+id/movie_runtime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/movie_extra_margin"
+            android:text="@string/movie_runtime"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@android:color/white" />
+        <TextView
+            android:id="@+id/movie_mpaa_rating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/movie_extra_margin"
+            android:text="@string/mpaa_rating"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@android:color/white" />
+        <!-- TextView for Original Language -->
+        <TextView
+            android:id="@+id/movie_country"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/movie_extra_margin"
+            android:text="@string/movie_country"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textColor="@android:color/white" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
             <ImageView
                 android:id="@+id/movie_tomato_icon"
                 android:layout_width="16dp"
@@ -120,24 +160,15 @@
                 android:id="@+id/movie_tomato_percentage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/movie_extra_margin"
                 android:text="@string/tomato_percentage"
                 android:textAppearance="@style/TextAppearance.AppCompat.Caption"
                 android:textColor="@android:color/white"
-                android:layout_marginEnd="8dp" />
+                />
         </LinearLayout>
-    </LinearLayout>
-        <!-- Left Pane: Side Button Menu -->
-    <LinearLayout
-        android:id="@+id/side_button_menu"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:background="@color/semi_transparent_black"
-        android:gravity="top"
-        android:elevation="1dp"
-        app:layout_constraintTop_toBottomOf="@id/top_menu"
-        app:layout_constraintBottom_toTopOf="@id/movie_overview"
-        app:layout_constraintStart_toStartOf="parent">
+
+
+
     </LinearLayout>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/directors_layout"

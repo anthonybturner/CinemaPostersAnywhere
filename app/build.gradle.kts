@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation (libs.androidx.core)
 
     // Jetpack Compose and UI dependencies
     implementation(platform(libs.androidx.compose.bom))
@@ -70,7 +71,6 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
-
 
     // Lifecycle components
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

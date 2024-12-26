@@ -30,7 +30,7 @@ public class NowPlayingActivity extends AppCompatActivity {
     private final BroadcastReceiver closeNowPlayingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Objects.equals(intent.getAction(), MovieConstants.CLOSE_NOW_PLAYING_ACTION)) {
+            if (Objects.equals(intent.getAction(), MovieConstants.ACTION_KODI_MOVIE_CLOSING)) {
                 finish();
             }
         }
@@ -44,22 +44,63 @@ public class NowPlayingActivity extends AppCompatActivity {
         setupUI(intent);
         LocalBroadcastManager.getInstance(this).registerReceiver(
                 closeNowPlayingReceiver,
-                new IntentFilter(MovieConstants.CLOSE_NOW_PLAYING_ACTION)
+                new IntentFilter(MovieConstants.ACTION_KODI_MOVIE_CLOSING)
         );
     }
 
     private void setupUI(Intent intent) {
+        setTextViewContent(R.id.movie_category, getFormattedCategory(intent));
+        setTextViewContent(R.id.movie_genres, getFormattedGenre(intent));
         setTextViewContent(R.id.movie_title, getFormattedTitle(intent));
         setTextViewContent(R.id.movie_runtime, getFormattedRuntime(intent));
         setTextViewContent(R.id.movie_overview, intent.getStringExtra("overview"));
-        setTextViewContent(R.id.movie_studio, intent.getStringExtra("studio"));
-        setTextViewContent(R.id.movie_ratings, String.valueOf(intent.getIntExtra("contentRating", 0)));
+        setTextViewContent(R.id.movie_studio, getFormattedStudio(intent));
+        setTextViewContent(R.id.movie_tagline, intent.getStringExtra("tagline"));
+        setTextViewContent(R.id.movie_mpaa_rating, getFormattedMPAARating(intent));
+        setTextViewContent(R.id.movie_country, getFormattedCountry(intent));
 
+        String trailer = intent.getStringExtra("trailer");
+
+        // Set the movie ratings
+        double rating = Math.floor( intent.getDoubleExtra("contentRating", 0) * 100) / 100;
+        setTextViewContent(R.id.movie_ratings, String.valueOf(rating));
+
+        // Load the movie poster
         loadImageIntoView(intent.getStringExtra("posterUrl"), findViewById(R.id.movie_poster));
+
+        // Load the movie backdrop
         if(intent.hasExtra("actorBundle")) {
             setupActorRoles(intent.getBundleExtra("actorBundle"));
         }
+        loadDirectors(intent);
+    }
+    private String getFormattedMPAARating(Intent intent) {
+        String mpaaRating = intent.getStringExtra("mpaa");
+        if (mpaaRating != null && !mpaaRating.isEmpty()) {
+            mpaaRating = mpaaRating.replace("\"", "").replace("[", "").replace("]", "");
+            mpaaRating = String.format("Rating: %s", mpaaRating);  // Store the formatted string
+        }
+        return mpaaRating;
+    }
 
+    private String getFormattedCountry(Intent intent) {
+        String country = intent.getStringExtra("country");
+        if (country != null && !country.isEmpty()) {
+            country = country.replace("\"", "").replace("[", "").replace("]", "");
+            country = String.format("Country: %s", country);  // Store the formatted string
+        }
+        return country;
+    }
+    private String getFormattedStudio(Intent intent) {
+        String studio = intent.getStringExtra("studio");
+        if (studio != null && !studio.isEmpty()) {
+            studio = studio.replace("\"", "").replace("[", "").replace("]", "");
+            studio = String.format("Studio: %s", studio);  // Store the formatted string
+        }
+        return studio;
+    }
+
+    private void loadDirectors(Intent intent) {
         ConstraintLayout directorsLayout =  findViewById(R.id.directors_layout);
         String directorsList = "";
         ArrayList<String> directorNames = intent.getStringArrayListExtra("directorNames");
@@ -72,6 +113,7 @@ public class NowPlayingActivity extends AppCompatActivity {
             directorsLayout.addView(directorCard);
         }
     }
+
     private @NonNull LinearLayout CreateDirectorsView(String name, String iconUrl) {
         LinearLayout directorCard = createDirectorsLayout();
         // Create ImageView for achievement icon
@@ -127,6 +169,20 @@ public class NowPlayingActivity extends AppCompatActivity {
         directorCard.setLayoutParams(linearLayoutParams);
         return directorCard;
 
+    }
+    private String getFormattedGenre(Intent intent) {
+        StringBuilder genres = new StringBuilder();
+        ArrayList<String> genreList = intent.getStringArrayListExtra("genre");
+        if (genreList != null) {
+            for (String genre : genreList) {
+                genres.append(genre).append(", ");
+            }
+        }
+        return "Genres: " +  genres.toString();
+    }
+    private String getFormattedCategory(Intent intent) {
+        String category = intent.getStringExtra("category");
+        return (category != null && !category.isEmpty()) ? String.format("%s ", category) : "Now Playing";
     }
     private String getFormattedTitle(Intent intent) {
         String year = intent.getStringExtra("year");

@@ -1,7 +1,9 @@
 package com.anthonybturner.cinemapostersanywhere;
 
-import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.MOVIE_UPDATED_INTENT_ACTION;
-import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.PLEX_MOVIE_PLAYING_INTENT_ACTION;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_MOVIE_NOW_PLAYING;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_MOVIE_RESUME_SLIDESHOW;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_MOVIE_UPDATED;
+import static com.anthonybturner.cinemapostersanywhere.Constants.MovieConstants.ACTION_PLEX_MOVIE_PLAYING;
 
 import android.content.Context;
 import android.content.Intent;
@@ -29,7 +31,7 @@ public class NowPlayingWebSocketListener {
 
     public void onMovieUpdate(Object data) {
         Log.d("WebSocket", "Movie update event received");
-        Intent intent = new Intent(MOVIE_UPDATED_INTENT_ACTION);
+        Intent intent = new Intent(ACTION_MOVIE_UPDATED);
         try{
             JSONObject jsonObject = new JSONObject(data.toString());
             String movieStatus = jsonObject.optString("movie_status", "{}"); // Fallback to empty JSON if missing
@@ -60,7 +62,7 @@ public class NowPlayingWebSocketListener {
                 TMDBUtils.fetchPosterUrlFromTMDB(context, tmdbId, posterUrl -> {
                     if (posterUrl != null) {
                         String eventType = payloadObject.optString("event", "");
-                        Intent intent = new Intent(PLEX_MOVIE_PLAYING_INTENT_ACTION);
+                        Intent intent = new Intent(ACTION_PLEX_MOVIE_PLAYING);
                         intent.putExtra("type", "plex");
                         intent.putExtra("id", -1);
                         intent.putExtra("title", title);
@@ -71,7 +73,7 @@ public class NowPlayingWebSocketListener {
                         intent.putExtra("posterUrl", posterUrl);
                         intent.putExtra("actorBundle", bundle);
                        // intent.putExtra("actorNotMainRoleBundle", bundle);
-                        intent.putExtra("action", eventType.equals("media.resume") || eventType.equals("media.play") ? "now_playing" : "resume_slideshow");
+                        intent.putExtra("action", eventType.equals("media.resume") || eventType.equals("media.play") ? ACTION_MOVIE_NOW_PLAYING : ACTION_MOVIE_RESUME_SLIDESHOW);
                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                     } else {
                         Log.e("WebSocket", "Failed to fetch poster URL for movie: " + title);

@@ -1,5 +1,6 @@
 [versions]
 agp = "8.7.3"
+core = "1.15.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 appcompat = "1.7.0"
@@ -26,6 +27,7 @@ cardview = "1.0.0"
 youtubeAndroidPlayerApi = "1.2.2"
 
 [libraries]
+androidx-core = { module = "androidx.core:core", version.ref = "core" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
