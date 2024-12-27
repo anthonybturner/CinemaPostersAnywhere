@@ -63,7 +63,7 @@ public class NowPlayingActivity extends AppCompatActivity {
 
         // Set the movie ratings
         double rating = Math.floor( intent.getDoubleExtra("contentRating", 0) * 100) / 100;
-        setTextViewContent(R.id.movie_ratings, String.valueOf(rating));
+     //   setTextViewContent(R.id.movie_ratings, String.valueOf(rating));
 
         // Load the movie poster
         loadImageIntoView(intent.getStringExtra("posterUrl"), findViewById(R.id.movie_poster));
@@ -206,7 +206,7 @@ public class NowPlayingActivity extends AppCompatActivity {
     private void setupActorRoles(Bundle rolesBundle) {
         if (rolesBundle == null) return;
 
-        LinearLayout sideMenuLayout = findViewById(R.id.side_button_menu);
+        LinearLayout sideMenuLayout = findViewById(R.id.movie_details);
         sideMenuLayout.removeAllViews();
 
         for (String key : rolesBundle.keySet()) {

@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -65,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_NOTIFICATION_PERMISSION = 1;
     private static long lastDisplayedMovieId = -1;
     private static boolean slideshowRunning;
-    private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView, progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView;
+    private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView, progressText, adultStatusTextView, originalLanguageTextView, genresTextView, popularityTextView, voteCountTextView, taglineTextView;
     private ImageView moviePosterImageView, tomatoIcon;
     private View btnCatNowPlaying;
     private ProgressBar progressBar;
@@ -108,28 +109,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
 /************************************* UI Methods**********************************************************/
-private void initializeViews() {
-    movieTitleTextView = findViewById(R.id.movie_title);
-    moviePosterImageView = findViewById(R.id.movie_poster);
-    movieOverviewTextView = findViewById(R.id.movie_overview);
-    movieCategoryTextView = findViewById(R.id.movie_category);
-    movieRatingTextView = findViewById(R.id.movie_tomato_percentage);
-    progressBar = findViewById(R.id.movie_progress_bar);
-    progressText = findViewById(R.id.movie_progress_text);
-    adultStatusTextView = findViewById(R.id.movie_ratings);
-    originalLanguageTextView = findViewById(R.id.movie_country);
-    genresTextView = findViewById(R.id.movie_genres);
-    popularityTextView = findViewById(R.id.movie_popularity);
-    voteCountTextView = findViewById(R.id.movie_vote_count);
-    tomatoIcon = findViewById(R.id.movie_tomato_icon);
-}
+    private void initializeViews() {
+        movieTitleTextView = findViewById(R.id.movie_title);
+        moviePosterImageView = findViewById(R.id.movie_poster);
+        movieOverviewTextView = findViewById(R.id.movie_overview);
+        movieCategoryTextView = findViewById(R.id.movie_category);
+        movieRatingTextView = findViewById(R.id.movie_tomato_percentage);
+        taglineTextView = findViewById(R.id.movie_tagline);
 
+        progressBar = findViewById(R.id.movie_progress_bar);
+        //progressText = findViewById(R.id.movie_progress_text);
+        //adultStatusTextView = findViewById(R.id.movie_ratings);
+        originalLanguageTextView = findViewById(R.id.movie_country);
+        genresTextView = findViewById(R.id.movie_genres);
+       // popularityTextView = findViewById(R.id.movie_popularity);
+       //voteCountTextView = findViewById(R.id.movie_vote_count);
+        tomatoIcon = findViewById(R.id.movie_tomato_icon);
+    }
     private void createButtons() {
         findViewById(R.id.btn_category_all).setOnClickListener(v -> observeAllMovies());
         findViewById(R.id.btn_category_top_rated).setOnClickListener(v -> onUpdateCategorySelection("Top Rated Movies"));
         findViewById(R.id.btn_category_popular).setOnClickListener(v -> onUpdateCategorySelection("Popular Movies"));
         findViewById(R.id.btn_category_trending).setOnClickListener(v -> onUpdateCategorySelection("Trending Movies"));
-        // Check if NowPlaying Activity is playing
+        findViewById(R.id.btn_delete).setOnClickListener(v -> onDeleteMovie());
+
         btnCatNowPlaying = findViewById(R.id.btn_category_now_playing);
         btnCatNowPlaying.setOnClickListener(v -> {
             handleNowPlayingIntent(intentNowPlaying);
@@ -138,22 +141,38 @@ private void initializeViews() {
             startActivity(intent);
         });
     }
-
-public void startSlideshow() {
-    stopSlideshow();
-    slideshowRunning = true;
-    slideshowTimer = new Timer();
-    slideshowTimer.schedule(new TimerTask() {
-        @Override
-        public void run() {
-            handler.post(() -> {
-                if (showingNowPlaying || movieList.isEmpty()) return;
-                goNextSlide();
+    private void onDeleteMovie() {
+        Movie currentMovie = movieList.get(currentImageIndex);
+        Executors.newSingleThreadExecutor().execute(() -> {
+            movieDao.deleteMovie(currentMovie.getId());
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "Deleted movie: " + currentMovie.getTitle(), Toast.LENGTH_SHORT).show();
+                movieList.remove(currentMovie);
+                if (movieList.isEmpty()) {
+                    stopSlideshow();
+                }
             });
-        }
-    }, 0, 15000);
-}
-
+        });
+    }
+    public void startSlideshow() {
+        slideshowTimer = new Timer();
+        slideshowTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(() -> {
+                    if (showingNowPlaying || movieList.isEmpty()) return;
+                    goNextSlide();
+                });
+            }
+        }, 0, 15000);
+        slideshowRunning = true;
+    }
+    private void resetSlideshowTimer() {
+        // Stop the current slideshow
+        stopSlideshow();
+        // Start the slideshow again (new timer)
+        startSlideshow();
+    }
     private void loadPoster(Movie movie) {
         String posterPath = movie.getPosterImage();
         if (posterPath != null && !posterPath.isEmpty()) {
@@ -186,7 +205,7 @@ public void startSlideshow() {
     }
     private void hideProgress() {
         progressBar.setVisibility(View.GONE);
-        progressText.setVisibility(View.GONE);
+        //progressText.setVisibility(View.GONE);
     }
 
     private void updateMovieDetails(Movie movie) {
@@ -196,11 +215,11 @@ public void startSlideshow() {
         setMovieOverview(movie.getOverview());
         setMovieCategory(movie.getCategory());
         setMovieRatings(movie.getVoteAverage());
-        setAdultStatus(movie.getAdult());
+        //setAdultStatus(movie.getAdult());
         setOriginalLanguage(movie.getOriginalLanguage());
         setGenres(movie.getGenres());
-        setPopularity(movie.getPopularity());
-        setVoteCount(movie.getVoteCount());
+        //setPopularity(movie.getPopularity());
+        //setVoteCount(movie.getVoteCount());
         loadPoster(movie);
     }
 
@@ -256,6 +275,7 @@ public void startSlideshow() {
 
     public void resumeSlideshow() {
         if (!showingNowPlaying) {
+            stopSlideshow();
             startSlideshow();
             Toast.makeText(MainActivity.this, "Posters resumed ", Toast.LENGTH_SHORT).show();
             slideshowRunning = true;
@@ -292,10 +312,10 @@ public void startSlideshow() {
     public void stopSlideshow() {
         if (slideshowTimer != null) {
             slideshowTimer.cancel();
-            slideshowRunning = false;
+            slideshowTimer = null;
         }
+        slideshowRunning = false;
     }
-
 
     private void updateNowPlayingButtonVisibility() {
         if(intentNowPlaying != null){
@@ -389,6 +409,7 @@ public void startSlideshow() {
         public void onFetchComplete(Intent intent) {
             runOnUiThread(() -> {
                 //  hideProgress();
+                stopSlideshow();
                 startSlideshow();
             });
         }
@@ -525,5 +546,4 @@ public void startSlideshow() {
             bound = false;
         }
     }
-
 }

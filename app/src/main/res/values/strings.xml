@@ -41,4 +41,5 @@
     <string name="movie_tagline">Tagline</string>
     <string name="mpaa_rating">MPAA Rating</string>
     <string name="movie_country">Country</string>
+    <string name="btn_delete">Delete</string>
 </resources>

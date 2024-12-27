@@ -19,6 +19,7 @@ public class NowPlayingReceiver extends BroadcastReceiver {
         if (Objects.equals(action, MovieConstants.ACTION_MOVIE_NOW_PLAYING)) {
             mainActivity.showNowPlaying(intent);
         } else if (Objects.equals(action, MovieConstants.ACTION_MOVIE_RESUME_SLIDESHOW)) {
+            mainActivity.stopSlideshow();
             mainActivity.startSlideshow();
         }
     }

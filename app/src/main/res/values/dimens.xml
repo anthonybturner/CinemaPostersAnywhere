@@ -2,4 +2,5 @@
 <resources>
     <dimen name="sidebar_width">500dp</dimen>
     <dimen name="movie_extra_margin">2dp</dimen>
+    <dimen name="btn_margin_bottom">4dp</dimen>
 </resources>
