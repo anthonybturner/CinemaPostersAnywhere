@@ -152,7 +152,7 @@ public class MovieService extends Service {
 
     private void handleMovieResponse(JSONObject response) {
         boolean isResumingSlideShow = false;
-        try {
+        try {// Check if the response contains a valid movie item
             if (response.has("result") && response.getJSONObject("result").has("item")) {
                 JSONObject results = response.getJSONObject("result");
                 JSONObject item = results.getJSONObject("item");
@@ -168,7 +168,7 @@ public class MovieService extends Service {
             }
         } catch (JSONException e) {
             Log.e(TAG, "Error parsing JSON response: " + e.getMessage());
-        } finally {
+        } finally {// Notify MainActivity to resume the slideshow
             if (isResumingSlideShow) {
                 NotifyResumeSlideshow();
             }

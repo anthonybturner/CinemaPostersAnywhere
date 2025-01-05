@@ -7,9 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.anthonybturner.cinemapostersanywhere.Models.Movie
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters
+import com.anthonybturner.cinemapostersanywhere.utilities.ProductionCompanyTypeConverter
+import com.anthonybturner.cinemapostersanywhere.utilities.SpokenLanguageTypeConverter
 
-@Database(entities = [Movie::class], version = 8)  // Make sure the version matches your current schema version
-@TypeConverters(Converters::class)  // Correct syntax for Kotlin
+@Database(entities = [Movie::class], version = 15)  // Make sure the version matches your current schema version
+@TypeConverters(Converters::class, SpokenLanguageTypeConverter::class, ProductionCompanyTypeConverter::class)  // Correct syntax for Kotlin
 abstract class AppDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
     companion object {

@@ -1,6 +1,8 @@
 [versions]
 agp = "8.7.3"
 core = "1.15.0"
+glideVersion = "4.13.2"
+guava = "31.0.1-android"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 appcompat = "1.7.0"
@@ -24,6 +26,7 @@ constraintlayout = "2.1.4"
 volley = "1.2.1"
 adapters = "3.2.0-alpha11"
 cardview = "1.0.0"
+workRuntime = "2.10.0"
 youtubeAndroidPlayerApi = "1.2.2"
 
 [libraries]
@@ -41,9 +44,13 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-tv-foundation = { group = "androidx.tv", name = "tv-foundation", version.ref = "tvFoundation" }
 androidx-tv-material = { group = "androidx.tv", name = "tv-material", version.ref = "tvMaterial" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntime" }
+compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glideVersion" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+glide-v4132 = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }

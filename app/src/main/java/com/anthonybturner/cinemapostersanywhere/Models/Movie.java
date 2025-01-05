@@ -9,11 +9,16 @@ import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
 import com.anthonybturner.cinemapostersanywhere.utilities.Converters;
+import com.anthonybturner.cinemapostersanywhere.utilities.SpokenLanguageTypeConverter;
+import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 
+import java.io.Reader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 
 @Entity(tableName = "movies")
@@ -26,6 +31,8 @@ public class Movie {
     private String title;
 
     private String overview;
+    @SerializedName("tagline")
+    private String tagline;
 
     @SerializedName("category")
     private String category;
@@ -38,9 +45,31 @@ public class Movie {
     @SerializedName("vote_average")
     private float voteAverage;  // Correct name for JSON mapping and Java convention
 
-    @SerializedName("genre_ids")
+    public String[] getGenres() {
+        return genres;
+    }
+    public void setGenres(String[] genres) {
+        this.genres = genres;
+    }
+    @SerializedName("genres")
+    @TypeConverters(Converters.class)
+    private String[] genres;
+
+    public List<ProductionCompany> getProductionCompanies() {
+        return productionCompanies;
+    }
+
+    public void setProductionCompanies(List<ProductionCompany> productionCompanies) {
+        this.productionCompanies = productionCompanies;
+    }
+
+    @SerializedName("production_companies")
     @TypeConverters(Converters.class)  // Use the converter for List<Integer>
-    private List<Integer> genreIds;  // Genre IDs returned by the TMDB API
+    private List<ProductionCompany> productionCompanies;  // Genre IDs returned by the TMDB API
+
+    @SerializedName("spoken_languages")
+    @TypeConverters(SpokenLanguageTypeConverter.class)
+    private List<SpokenLanguage> spokenLanguages;
 
     @SerializedName("adult")
     private Boolean adult;
@@ -48,16 +77,28 @@ public class Movie {
     @SerializedName("original_language")
     private String originalLanguage;
 
-    private String genres;  // Store genres as a comma-separated string
-
     @SerializedName("popularity")
     private double popularity;
 
     @SerializedName("vote_count")
     private int voteCount;
 
-    @SerializedName("release_year")
+    @SerializedName("release_date")
     private String releaseDate;
+
+    @SerializedName("runtime")
+    private Integer runtime;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    @SerializedName("status")
+    private String status;
 
     // Default constructor required by Room
     public Movie() {
@@ -179,24 +220,15 @@ public class Movie {
         this.originalLanguage = originalLanguage;
     }
 
-    // Getter and setter for genreIds
-    public List<Integer> getGenreIds() {
-        return genreIds;
-    }
-
-    public void setGenreIds(List<Integer> genreIds) {
-        this.genreIds = genreIds;
-    }
-
-    // Getter and setter for genres (stored as a comma-separated string)
-    public String getGenres() {
+    // Add a getter for genreNames
+    public String[] getGenreNames() {
         return genres;
     }
 
-    public void setGenres(String genres) {
-        this.genres = genres;
+    // Add a setter for genreNames
+    public void setGenreNames(String[] genreNames) {
+        this.genres = genreNames;
     }
-
     // Getter and setter for popularity
     public double getPopularity() {
         return popularity;
@@ -213,5 +245,30 @@ public class Movie {
 
     public void setVoteCount(int voteCount) {
         this.voteCount = voteCount;
+    }
+
+    public String getTagline() {
+        return tagline;
+    }
+
+    public void setTagline(String tagline) {
+        this.tagline = tagline;
+    }
+
+    public List<SpokenLanguage> getSpokenLanguages() {
+       return spokenLanguages;
+   }
+
+   public void setSpokenLanguages(List<SpokenLanguage> spokenLanguages) {
+        // Convert from List<String> to JSON string
+        this.spokenLanguages = spokenLanguages;
+   }
+
+    public Integer getRuntime() {
+        return runtime;
+    }
+
+    public void setRuntime(Integer runtime) {
+        this.runtime = runtime;
     }
 }

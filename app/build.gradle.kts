@@ -80,12 +80,16 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
+    implementation (libs.androidx.work.runtime)
 
     // Image loading
     implementation(libs.glide)
+    implementation (libs.guava)
 
     // Volley for networking
     implementation(libs.volley)
+    implementation (libs.glide.v4132)
+    annotationProcessor (libs.compiler)
 
     // LocalBroadcastManager
     implementation(libs.androidx.localbroadcastmanager)

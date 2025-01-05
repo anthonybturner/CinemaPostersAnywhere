@@ -23,6 +23,7 @@
     <string name="popularity">Popularity</string>
     <string name="vote_count">Vote Count</string>
     <string name="padding">12dp</string>
+    <string name="empty_string"> </string>
     <string name="studio">Studio: </string>
     <string name="studio_value">[Unknown Studio]</string>
     <string name="tomato_rating">Tomatoes:</string>
@@ -37,7 +38,9 @@
     <string name="enter_ip_address">Enter IP address</string>
     <string name="enter_port">Enter port</string>
     <string name="movie_runtime">Runtime: 0:00:00</string>
-    <string name="movie_status">Movie Category</string>
+    <string name="movie_status">Movie Status</string>
+    <string name="movie_release_date">Movie Release Date</string>
+    <string name="movie_category">Movie Category</string>
     <string name="movie_tagline">Tagline</string>
     <string name="mpaa_rating">MPAA Rating</string>
     <string name="movie_country">Country</string>

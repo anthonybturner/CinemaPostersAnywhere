@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.room.TypeConverter;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -17,29 +18,26 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 public class Converters {
 
-    // Convert List<Integer> to a comma-separated String
+    // Convert a String[] to a single String (comma-separated values)
     @TypeConverter
-    public static String fromGenreIdsList(List<Integer> genreIds) {
-        if (genreIds == null || genreIds.isEmpty()) {
+    public static String fromStringArray(String[] genres) {
+        if (genres == null) {
             return null;
         }
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            return genreIds.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));  // Convert list to a comma-separated string
-        } else {
-            // For older versions, manually convert list to a comma-separated string
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < genreIds.size(); i++) {
-                result.append(genreIds.get(i));
-                if (i < genreIds.size() - 1) {
-                    result.append(",");
-                }
-            }
-            return result.toString();
+        return String.join(",", genres); // Joins the array into a single comma-separated String
+    }
+    // Convert a String (comma-separated values) back to a String[] array
+    @TypeConverter
+    public static String[] fromString(String genresString) {
+        if (genresString == null) {
+            return null;
         }
+        return genresString.split(","); // Splits the string back into an array
     }
     public static String decodeUrl(String url) {
         try {
@@ -88,6 +86,13 @@ public class Converters {
         // Format the result as "X hours Y minutes"
         return hours + " hours " + minutes + " minutes";
     }
+    public static String convertMinutesToHoursClock(long totalMinutes) {
+        long hours = totalMinutes / 60; // Calculate hours
+        long minutes = totalMinutes % 60; // Calculate remaining minutes
+
+        // Format the result as "X hours Y minutes"
+        return String.format(Locale.ENGLISH, "%dh:%dm", hours, minutes);
+    }
     public static String convertSecondsToTime(long seconds) {
         long hours = seconds / 3600;
         long minutes = (seconds % 3600) / 60;
@@ -114,5 +119,25 @@ public class Converters {
             }
             return genreIds;
         }
+    }
+
+    // Convert List<String> to a single String
+    @TypeConverter
+    public static String fromList(List<String> list) {
+        if (list == null) {
+            return null;
+        }
+        Gson gson = new Gson();
+        return gson.toJson(list);
+    }
+    // Convert String back to List<String>
+    @TypeConverter
+    public static List<String> toList(String data) {
+        if (data == null) {
+            return null;
+        }
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<String>>(){}.getType();
+        return gson.fromJson(data, listType);
     }
 }

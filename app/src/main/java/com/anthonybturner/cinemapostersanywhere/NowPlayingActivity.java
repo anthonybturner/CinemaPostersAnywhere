@@ -26,7 +26,6 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class NowPlayingActivity extends AppCompatActivity {
-
     private final BroadcastReceiver closeNowPlayingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -35,7 +34,6 @@ public class NowPlayingActivity extends AppCompatActivity {
             }
         }
     };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,7 +45,6 @@ public class NowPlayingActivity extends AppCompatActivity {
                 new IntentFilter(MovieConstants.ACTION_KODI_MOVIE_CLOSING)
         );
     }
-
     private void setupUI(Intent intent) {
         setTextViewContent(R.id.movie_category, getFormattedCategory(intent));
         setTextViewContent(R.id.movie_genres, getFormattedGenre(intent));
@@ -82,7 +79,6 @@ public class NowPlayingActivity extends AppCompatActivity {
         }
         return mpaaRating;
     }
-
     private String getFormattedCountry(Intent intent) {
         String country = intent.getStringExtra("country");
         if (country != null && !country.isEmpty()) {
@@ -99,7 +95,6 @@ public class NowPlayingActivity extends AppCompatActivity {
         }
         return studio;
     }
-
     private void loadDirectors(Intent intent) {
         ConstraintLayout directorsLayout =  findViewById(R.id.directors_layout);
         String directorsList = "";
@@ -113,7 +108,6 @@ public class NowPlayingActivity extends AppCompatActivity {
             directorsLayout.addView(directorCard);
         }
     }
-
     private @NonNull LinearLayout CreateDirectorsView(String name, String iconUrl) {
         LinearLayout directorCard = createDirectorsLayout();
         // Create ImageView for achievement icon
@@ -126,7 +120,6 @@ public class NowPlayingActivity extends AppCompatActivity {
 
         return directorCard;
     }
-
     private ImageView CreateDirectorsIconView(String iconUrl) {
         ImageView iconImageView = new ImageView(this);
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -143,7 +136,6 @@ public class NowPlayingActivity extends AppCompatActivity {
                 .into(iconImageView);
         return iconImageView;
     }
-
     private TextView CreateDirectorsTextView(String name, int size, int LayoutParamWidth) {
         TextView achievementTextView = new TextView(this);
         achievementTextView.setText(name);
@@ -154,7 +146,6 @@ public class NowPlayingActivity extends AppCompatActivity {
         achievementTextView.setLayoutParams(layoutParams);
         return achievementTextView;
     }
-
     private LinearLayout createDirectorsLayout() {
         LinearLayout directorCard = new LinearLayout(this);
         //directorCard.setBackgroundResource(R.drawable.achievement_card_selector);
@@ -196,7 +187,6 @@ public class NowPlayingActivity extends AppCompatActivity {
         }
         return strRuntime;
     }
-
     private void setTextViewContent(int textViewId, String content) {
         TextView textView = findViewById(textViewId);
         if (textView != null) {
@@ -215,7 +205,6 @@ public class NowPlayingActivity extends AppCompatActivity {
             }
         }
     }
-
     private void createRoleView(String key, Bundle rolesBundle, LinearLayout parentLayout) {
         String actorName = key.replace("_role", "");
         String actorRole = rolesBundle.getString(key);
@@ -234,7 +223,6 @@ public class NowPlayingActivity extends AppCompatActivity {
         textLayout.addView(createTextView(String.format("%s as %s",actorName,actorRole), android.R.color.white));
         parentLayout.addView(cardView);
     }
-
     private CardView createCardView() {
         CardView cardView = new CardView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -247,14 +235,12 @@ public class NowPlayingActivity extends AppCompatActivity {
         cardView.setBackgroundResource(R.drawable.transparent_background);
         return cardView;
     }
-
     private LinearLayout createLinearLayout(int orientation, int leftPadding, int topPadding, int rightPadding, int bottomPadding) {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(orientation);
         layout.setPadding(leftPadding, topPadding, rightPadding, bottomPadding); // Set the padding
         return layout;
     }
-
     private LinearLayout createInnerTextLayout() {
         LinearLayout layout = createLinearLayout(LinearLayout.VERTICAL, 0, 0 , 0 , 0);
         layout.setGravity(Gravity.CENTER);
@@ -262,7 +248,6 @@ public class NowPlayingActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         return layout;
     }
-
     private TextView createTextView(String text, int colorRes) {
         TextView textView = new TextView(this);
         textView.setGravity(Gravity.CENTER);
@@ -273,7 +258,6 @@ public class NowPlayingActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         return textView;
     }
-
     private void loadImageIntoView(String url, ImageView imageView) {
         Glide.with(this)
                 .load(url != null && !url.isEmpty() ? url : R.drawable.placeholder_image)
@@ -281,7 +265,6 @@ public class NowPlayingActivity extends AppCompatActivity {
                 .placeholder(R.drawable.placeholder_image)
                 .into(imageView);
     }
-
     private ImageView loadActorImage() {
         ImageView imageView = new ImageView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(72, 72);
@@ -290,7 +273,6 @@ public class NowPlayingActivity extends AppCompatActivity {
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         return imageView;
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
