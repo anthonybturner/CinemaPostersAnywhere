@@ -23,13 +23,12 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -53,7 +52,7 @@ import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -68,20 +67,15 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Data;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int slideShowPeriod;
-
     public static boolean isSameMovie(long movieId) {
         return lastDisplayedMovieId == movieId;
     }
-    private static final int REQUEST_NOTIFICATION_PERMISSION = 1;
     private static long lastDisplayedMovieId = -1;
     private static boolean slideshowRunning;
     private TextView movieTitleTextView, movieOverviewTextView, movieCategoryTextView, movieRatingTextView,
@@ -101,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean showingNowPlaying = false;
     private boolean bound;
     private PowerManager.WakeLock wakeLock;
-    private ActionBarDrawerToggle drawerToggle;
     private MutableLiveData<String> selectedCategory = new MutableLiveData<>();// LiveData for selected category
     private LiveData<List<Movie>> moviesByCategory;// LiveData for movies by category
 
@@ -150,9 +143,9 @@ public class MainActivity extends AppCompatActivity {
     }
     private void createButtons() {
         findViewById(R.id.btn_category_all).setOnClickListener(v -> observeAllMovies());
-        findViewById(R.id.btn_category_top_rated).setOnClickListener(v -> onUpdateCategorySelection("Top Rated Movies"));
-        findViewById(R.id.btn_category_popular).setOnClickListener(v -> onUpdateCategorySelection("Popular Movies"));
-        findViewById(R.id.btn_category_trending).setOnClickListener(v -> onUpdateCategorySelection("Trending Movies"));
+        findViewById(R.id.btn_category_top_rated_movies).setOnClickListener(v -> onUpdateCategorySelection("Top Rated Movies"));
+        findViewById(R.id.btn_category_popular_movies).setOnClickListener(v -> onUpdateCategorySelection("Popular Movies"));
+        findViewById(R.id.btn_category_trending_movies).setOnClickListener(v -> onUpdateCategorySelection("Trending Movies"));
         findViewById(R.id.btn_delete).setOnClickListener(v -> onDeleteMovie());
 
         btnCatNowPlaying = findViewById(R.id.btn_category_now_playing);
@@ -168,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
     public void startSlideshow() {
         randomizeSlideshow();
         slideshowTimer = new Timer();
-        slideShowPeriod = 15000;
+        int slideShowPeriod = 15000;
         slideshowTimer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -233,21 +226,6 @@ public class MainActivity extends AppCompatActivity {
                     .into(moviePosterImageView);
         }
     }
-    private void showProgress(int totalFiles) {
-        runOnUiThread(() -> {
-            progressBar.setVisibility(View.VISIBLE);
-            progressText.setVisibility(View.VISIBLE);
-            progressBar.setMax(totalFiles);
-        });
-    }
-
-    private void updateProgress(int currentFile, int totalFiles) {
-        runOnUiThread(() -> {
-            progressBar.setProgress(currentFile);
-            int percentage = (int) ((currentFile / (float) totalFiles) * 100);
-            progressText.setText(String.format("Loading posters...\n%d/%d (%d%%)", currentFile, totalFiles, percentage));
-        });
-    }
     private void hideProgress() {
         progressBar.setVisibility(View.GONE);
         //progressText.setVisibility(View.GONE);
@@ -261,8 +239,9 @@ public class MainActivity extends AppCompatActivity {
         setTagLine(movie.getTagline());
         setMovieCategory(movie.getCategory());
         setMovieRatings(movie.getVoteAverage());
-        setMovieStatus(movie.getStatus());
-        setMovieReleaseDate(movie.getReleaseDate());
+        String status = movie.getStatus();
+        setMovieStatus(status);
+        setMovieReleaseDate(status, movie.getReleaseDate());
         setRuntime(movie.getRuntime());
         setSpokenLanguage(movie.getSpokenLanguages());
         setProductionCompanies(movie.getProductionCompanies());
@@ -286,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
             companies.append("Unknown");
         }
         // Set the text in the TextView
-        movieStudioTextView.setText(String.format(Locale.ENGLISH, "Studios: %s", companies.toString()));
+        movieStudioTextView.setText(String.format(Locale.ENGLISH, "%s", companies.toString()));
     }
 
     private void setSpokenLanguage(List<SpokenLanguage> spokenLanguages) {
@@ -315,8 +294,8 @@ public class MainActivity extends AppCompatActivity {
         }
         movieSpokenLangsTextView.setText(String.format (Locale.ENGLISH, "Languages: %s ", languages));
     }
-    private void setMovieReleaseDate(String releaseDate) {
-        movieReleaseDateTextView.setText(String.format("Released: %s", releaseDate));
+    private void setMovieReleaseDate(String status, String releaseDate) {
+        movieReleaseDateTextView.setText(String.format("%s: %s",status, releaseDate));
     }
     private void setRuntime(int runtime) {
         movieRuntimeTextView.setText(String.format("Runtime: %s", Converters.convertMinutesToHoursClock(runtime)));
@@ -404,8 +383,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChanged(List<Movie> localMovies) {
                 if (localMovies != null && !localMovies.isEmpty()) {
-                    movieList = localMovies;
-                    onFetchCompleteCallback.onFetchComplete(null); // Call the callback here
+                   updateMovieList(localMovies);
                 } else {
                     fetchServerPosters(onFetchCompleteCallback); // If no movies are found, fetch from server
                 }
@@ -421,6 +399,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    private void updateMovieList(List<Movie> localMovies) {
+        movieList = localMovies;
+        onFetchCompleteCallback.onFetchComplete(null); // Call the callback here
+    }
     private void observeAllMovies() {
         if (moviesByCategory != null) {
             moviesByCategory.removeObservers(this); // Remove previous observers
@@ -431,8 +413,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChanged(List<Movie> movies) {
                 if (movies != null && !movies.isEmpty()) {
-                    movieList = movies;
-                    onFetchCompleteCallback.onFetchComplete(null);
+                    updateMovieList(movies);
                     Toast.makeText(MainActivity.this, "Fetched " + movies.size() + " movies from DB", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(MainActivity.this, "No movies found locally. Fetching from server...", Toast.LENGTH_SHORT).show();
@@ -451,14 +432,36 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onChanged(List<Movie> movies) {
                 if (movies != null && !movies.isEmpty()) {
-                    movieList = movies;
+                    updateMovieList(movies);
+                    updateButtonCategoryCount(category);
                     Toast.makeText(MainActivity.this, "Fetched " + movies.size() + " " + category + " movies from DB", Toast.LENGTH_SHORT).show();
-                    onFetchCompleteCallback.onFetchComplete(null);
                 } else {
                     Toast.makeText(MainActivity.this, "No " + category + " movies found in the database.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+    }
+    private void updateButtonCategoryCount(String category) {
+        Button categoryBtn = null;
+        if(category.equals("Top Rated Movies")){
+            categoryBtn = findViewById(R.id.btn_category_top_rated_movies);
+            if (categoryBtn.getText().toString().contains("(")) {
+                categoryBtn.setText("");
+            }
+            categoryBtn.setText(String.format(Locale.ENGLISH, "%s (+%d)", "Top", movieList.size()));
+        }if(category.equals("Popular Movies")){
+            categoryBtn = findViewById(R.id.btn_category_popular_movies);
+            if (categoryBtn.getText().toString().contains("(")) {
+                categoryBtn.setText("");
+            }
+            categoryBtn.setText(String.format(Locale.ENGLISH, "%s (+%d)", "Popular", movieList.size()));
+        }if(category.equals("Trending Movies")){
+            categoryBtn = findViewById(R.id.btn_category_trending_movies);
+            if (categoryBtn.getText().toString().contains("(")) {
+                categoryBtn.setText("");
+            }
+            categoryBtn.setText(String.format(Locale.ENGLISH, "%s (+%d)", "Trending", movieList.size()));
+        }
     }
     private void onUpdateCategorySelection(String category) {
         selectedCategory.setValue(category);
@@ -549,7 +552,6 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<List<Movie>> call, Response<List<Movie>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     processMovies(response.body());
-                    callback.onFetchComplete(null);
                 }
             }
             @Override
@@ -560,14 +562,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     private void processMovies(List<Movie> movies) {
-        movieList = movies;
-        int totalFiles = movieList.size();
-        // Use a single ExecutorService to handle background tasks
-        for (int i = 0; i < totalFiles; i++) {
-            Movie movie = movieList.get(i);
-            String imageUrl = movie.getPosterPath();
-            downloadImageWithWorkManager(imageUrl); // Start downloading image with WorkManager
-        }
+        downloadMovieImages(movies);
+        updateMovieList(movies);
         // Insert movies into the database after processing
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         executorService.submit(new Runnable() {
@@ -576,6 +572,15 @@ public class MainActivity extends AppCompatActivity {
                 movieDao.insertMovies(movieList);  // Offload database work to background thread
             }
         });
+    }
+
+    private void downloadMovieImages(List<Movie> movies) {
+        int totalFiles = movies.size();
+        for (int i = 0; i < totalFiles; i++) {//Download images for each movie/poster
+            Movie movie = movies.get(i);
+            String imageUrl = movie.getPosterPath();
+            downloadImageWithWorkManager(imageUrl); // Start downloading image with WorkManager
+        }
     }
 
     private void processMovie(Movie movie, int index, int totalFiles) {
